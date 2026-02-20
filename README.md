@@ -1,3 +1,4 @@
+AviUtl2はzipでポータブル版を想定しています
 # AviUtl2-WhisperAutoSub
 
 AviUtl2 で Whisper を使用して動画・音声から自動で字幕を生成するプラグインです。
