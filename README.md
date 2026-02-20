@@ -34,12 +34,15 @@ AviUtl2でWhisperを使用して動画・音声から自動で字幕を生成す
 
 ### 2. ffmpegのインストール
 
-1. [ffmpeg公式サイト](https://ffmpeg.org/download.html) または [gyan.dev](https://www.gyan.dev/ffmpeg/builds/) から Windows用ビルドをダウンロード
-2. 任意のフォルダに展開（例: `C:\ffmpeg`）
-3. 以下のいずれかの方法で使えるようにします:
-   - `ffmpeg.exe` を AviUtl2 の実行ファイルと同じフォルダにコピー
+1. [gyan.dev](https://www.gyan.dev/ffmpeg/builds/) にアクセス
+2. **「release builds」** セクションにある `ffmpeg-release-essentials.zip` をダウンロード（約80MB）
+3. ZIPを展開すると `ffmpeg-x.x-essentials_build` フォルダができます
+4. その中の `bin\ffmpeg.exe` を以下のいずれかの方法で使えるようにします:
+   - **おすすめ**: `ffmpeg.exe` を AviUtl2 の実行ファイルと同じフォルダにコピー
    - または、プラグインの初期設定タブで `ffmpeg.exe` のパスを直接指定
-   - または、システム環境変数の PATH に `C:\ffmpeg\bin` を追加
+   - または、システム環境変数の PATH に `bin` フォルダのパスを追加
+
+> 💡 `essentials` 版で十分です。`full` 版（約200MB）は不要な追加コーデックを含むため大きくなりますが、本プラグインでは違いはありません。
 
 ### 3. プラグインのインストール
 
