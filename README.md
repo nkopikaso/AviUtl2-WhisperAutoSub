@@ -1,4 +1,5 @@
 AviUtl2はzipでポータブル版を想定しています
+
 # AviUtl2-WhisperAutoSub
 
 AviUtl2 で Whisper を使用して動画・音声から自動で字幕を生成するプラグインです。
@@ -9,9 +10,7 @@ AviUtl2 で Whisper を使用して動画・音声から自動で字幕を生成
 
 右側の **Releases** から `WhisperAutoSub.aux2` をダウンロードしてください。
 
-こちらからダウンロード：
-https://github.com/nkopikaso/AviUtl2-WhisperAutoSub/releases
----
+## こちらからダウンロード： <https://github.com/nkopikaso/AviUtl2-WhisperAutoSub/releases>
 
 ## はじめに（初めての方へ）
 
@@ -26,9 +25,11 @@ https://github.com/nkopikaso/AviUtl2-WhisperAutoSub/releases
 4. ⚠️ **最初の画面で「Add python.exe to PATH」にチェックを入れる**（最重要）
 5. 「Install Now」をクリック
 6. インストール完了後、コマンドプロンプトで確認:
+
    ```
    python --version
    ```
+
    `Python 3.12.x` と表示されれば成功です。
 
 > ⚠️ 「Add python.exe to PATH」を忘れた場合:
@@ -42,9 +43,9 @@ https://github.com/nkopikaso/AviUtl2-WhisperAutoSub/releases
 2. **「release builds」** セクションにある `ffmpeg-release-essentials.zip` をダウンロード（約 80MB）
 3. ZIP を展開すると `ffmpeg-x.x-essentials_build` フォルダができます
 4. その中の `bin\ffmpeg.exe` を以下のいずれかの方法で使えるようにします:
-   - **おすすめ**: `ffmpeg.exe` を AviUtl2 の実行ファイルと同じフォルダにコピー
-   - または、プラグインの初期設定タブで `ffmpeg.exe` のパスを直接指定
-   - または、システム環境変数の PATH に `bin` フォルダのパスを追加
+   * **おすすめ**: `ffmpeg.exe` を AviUtl2 の実行ファイルと同じフォルダにコピー
+   * または、プラグインの初期設定タブで `ffmpeg.exe` のパスを直接指定
+   * または、システム環境変数の PATH に `bin` フォルダのパスを追加
 
 > 💡 `essentials` 版で十分です。`full` 版（約 200MB）は不要な追加コーデックを含むため大きくなりますが、本プラグインでは違いはありません。
 
@@ -76,9 +77,9 @@ https://github.com/nkopikaso/AviUtl2-WhisperAutoSub/releases
 ## 必要環境
 
 | 項目 | 要件 | 備考 |
-|------|------|------|
-| OS | Windows 10 / 11 | |
-| AviUtl2 | 最新版推奨 | |
+| --- | --- | --- |
+| OS | Windows 10 / 11 |  |
+| AviUtl2 | 2.0 beta40 以降推奨 |  |
 | Python | 3.10〜3.12 推奨 | [ダウンロード](https://www.python.org/downloads/) |
 | ffmpeg | 最新の安定版推奨 | [ダウンロード](https://www.gyan.dev/ffmpeg/builds/) |
 | GPU（任意） | NVIDIA CUDA 12.1+ 対応 | なくても CPU モードで動作します |
@@ -86,14 +87,14 @@ https://github.com/nkopikaso/AviUtl2-WhisperAutoSub/releases
 ### 動作確認環境
 
 | 項目 | バージョン |
-|------|-----------|
+| --- | --- |
 | OS | Windows 10 |
 | CPU | Intel Core i7-12700F |
 | GPU | NVIDIA GeForce RTX 3080 (10GB) |
 | RAM | 32GB |
 | Python | 3.12.10 |
 | FFmpeg | 7.1 |
-| AviUtl2 | ExEdit2 2.0beta33 |
+| AviUtl2 | ExEdit2 2.0 beta40 |
 
 ---
 
@@ -118,18 +119,16 @@ https://github.com/nkopikaso/AviUtl2-WhisperAutoSub/releases
 
 ## 各タブの設定項目
 
-プラグインウィンドウには **「字幕生成」タブ** と **「初期設定」タブ** の 2 つがあります。
+プラグインウィンドウには **「字幕生成」「設定」「精度」「初期設定」** の 4 つのタブがあります。
 
 ### 「字幕生成」タブ
 
-字幕の生成に関する設定と実行ボタンがあります。
+字幕の生成に関する基本設定と実行ボタンがあります。
 
 | 設定項目 | 選択肢 / 入力 | デフォルト | 説明 |
-|----------|---------------|-----------|------|
+| --- | --- | --- | --- |
 | **Backend** | `faster-whisper` / `whisper` | `faster-whisper` | 音声認識に使用するバックエンド。詳細は「バックエンドの選び方」参照 |
-| **Model** | `small` / `medium` / `large-v3` / `large-v3-turbo` | `large-v3-turbo` | 音声認識モデル。詳細は「モデルの選び方」参照 |
-| **Beam** | 1〜10（数値入力） | `5` | ビームサーチの幅。大きいほど精度が上がるが遅くなる。通常は 5 で十分 |
-| **Temp** | 0 以上の数値 | `0` | 温度パラメータ。0 = 固定（決定的な出力）。値を上げるとランダム性が増す |
+| **Model** | `tiny` / `base` / `small` / `medium` / `large-v3` / `large-v3-turbo` / `kotoba-whisper` | `large-v3-turbo` | 音声認識モデル。詳細は「モデルの選び方」参照 |
 | **Device** | `自動選択` / `CPU` / `CUDA (GPU)` | `自動選択` | 推論デバイス。自動選択では CUDA 対応 GPU があれば GPU、なければ CPU を使用 |
 | **言語** | `自動判定` / `日本語 (ja)` / `英語 (en)` / `中国語 (zh)` / `韓国語 (ko)` | `日本語 (ja)` | 音声の言語。自動判定は Whisper に言語検出を任せる |
 | **Layer** | 数値入力 | `2` | 字幕オブジェクトを配置するレイヤー番号。既存オブジェクトがある場合は自動で次のレイヤーにシフト |
@@ -139,41 +138,68 @@ https://github.com/nkopikaso/AviUtl2-WhisperAutoSub/releases
 **ボタン:**
 
 | ボタン | 機能 |
-|--------|------|
+| --- | --- |
 | **字幕生成** | タイムライン上のクリップから字幕を生成してレイヤーに配置 |
 | **SRT エクスポート** | 生成済みの字幕データを `.srt` ファイルとして保存 |
 
+### 「設定」タブ
+
+テキスト処理と字幕表示に関する設定があります。
+
+**テキスト処理（チェックボックス）:**
+
+| 設定項目 | デフォルト | 説明 |
+| --- | --- | --- |
+| **句読点削除** | OFF | 文字起こし結果から句読点（、。，．）を削除 |
+| **!? 削除** | OFF | 文字起こし結果から `!` と `?` を削除 |
+| **全半角正規化** | OFF | 全角英数字を半角に、半角カタカナを全角に正規化 |
+
+**その他:**
+
+| 設定項目 | 入力 | デフォルト | 説明 |
+| --- | --- | --- | --- |
+| **Beam** | 1〜10（数値入力） | `5` | ビームサーチの幅。大きいほど精度が上がるが遅くなる。通常は 5 で十分 |
+| **Temp** | 0 以上の数値 | `0` | 温度パラメータ。0 の場合は自動フォールバック（0→0.2→0.4→0.6→0.8→1.0）が適用される |
+| **字幕延長** | 秒数（小数可） | `1.0` | 発話終了後も指定秒数だけ字幕を表示し続ける（リンガー）。0 = 延長なし。最大 10 秒 |
+
+### 「精度」タブ（v2.8 新規）
+
+認識精度とハルシネーション対策に関する詳細設定があります。
+
+| 設定項目 | 種類 | デフォルト | 説明 |
+| --- | --- | --- | --- |
+| **前文無効** | チェックボックス | ON | 前のセグメントのテキストを次の推論に使わない（ハルシネーション対策） |
+| **繰返し抑制** | チェックボックス | ON | repetition_penalty を有効化し、同じフレーズの繰り返しを抑制 |
+| **単語TS** | チェックボックス | OFF | 単語単位のタイムスタンプを有効化 |
+| **Batched** | チェックボックス | OFF | GPU 並列処理（Batched推論）を有効化。CUDA 環境でのみ動作 |
+| **ヒント文** | テキスト入力 | 空 | initial_prompt に渡す文章。固有名詞や専門用語を入力すると認識精度が向上 |
+| **ホットワード** | テキスト入力 | 空 | カンマ区切りで指定。デコーダで特定の単語をブーストする |
+
+**自動適用される品質フィルタ（設定不要）:**
+
+| フィルタ | 閾値 | 説明 |
+| --- | --- | --- |
+| **avg_logprob フィルタ** | < -1.0 で除外 | 信頼度の低いセグメントを自動除外 |
+| **no_speech_prob フィルタ** | > 0.6 で除外 | 非音声区間と判定されたセグメントを自動除外 |
+| **hallucination_silence_threshold** | 2.0 秒 | 無音区間でのハルシネーションを自動抑制 |
+
 ### 「初期設定」タブ
 
-外部ツールのパス指定、テキスト処理オプション、セットアップ機能があります。
+外部ツールのパス指定とセットアップ機能があります。
 
 **パス設定:**
 
 | 設定項目 | 操作 | デフォルト | 説明 |
-|----------|------|-----------|------|
+| --- | --- | --- | --- |
 | **ffmpeg** | パス表示 + 選択ボタン | 自動検出（AviUtl2.exe と同じフォルダ） | `ffmpeg.exe` のパス。未指定の場合は AviUtl2 のフォルダと PATH から自動検出 |
 | **Python** | パス表示 + 選択ボタン | 自動検出 | `python.exe` のパス。`%LOCALAPPDATA%\Programs\Python\Python3{8-13}` を自動スキャン |
 | **faster-whisper** | パス表示 + 選択 / 自動ボタン | 自動（プラグインの site-packages） | faster-whisper パッケージの場所。「自動」でデフォルトに戻す |
 | **whisper** | パス表示 + 選択 / 自動ボタン | 自動（プラグインの site-packages） | openai-whisper パッケージの場所。「自動」でデフォルトに戻す |
 
-**テキスト処理（チェックボックス）:**
-
-| 設定項目 | デフォルト | 説明 |
-|----------|-----------|------|
-| **句読点削除** | OFF | 文字起こし結果から句読点（、。，．）を削除 |
-| **!? 削除** | OFF | 文字起こし結果から `!` と `?` を削除 |
-| **全半角正規化** | OFF | 全角英数字を半角に、半角カタカナを全角に正規化 |
-
-**字幕延長:**
-
-| 設定項目 | 入力 | デフォルト | 説明 |
-|----------|------|-----------|------|
-| **字幕延長** | 秒数（小数可） | `1.0` | 発話終了後も指定秒数だけ字幕を表示し続ける（リンガー）。0 = 延長なし。最大 10 秒 |
-
 **ボタン:**
 
 | ボタン | 機能 |
-|--------|------|
+| --- | --- |
 | **セットアップ（インストール + モデル DL）** | 「字幕生成」タブで選択中の Backend と Model をインストール |
 
 > ※ セットアップの対象となる Backend と Model は「字幕生成」タブの選択に連動しています。
@@ -183,37 +209,78 @@ https://github.com/nkopikaso/AviUtl2-WhisperAutoSub/releases
 ## バックエンドの選び方
 
 | バックエンド | 特徴 | おすすめ |
-|---|---|---|
+| --- | --- | --- |
 | **faster-whisper** | 高速・省メモリ（CTranslate2 使用） | 通常はこちらがおすすめ |
 | **openai-whisper** | OpenAI 公式実装（PyTorch 使用） | 互換性重視の場合 |
 
-faster-whisper は同じモデルでも openai-whisper の 2〜4 倍高速ですが精度を考えると**openai-whisper をおすすめ** します。
+faster-whisper は同じモデルでも openai-whisper の 2〜4 倍高速です。
+特にこだわりがなければ **faster-whisper をおすすめ** します。
+
+> ⚠️ `kotoba-whisper` および `Batched推論` は faster-whisper バックエンド専用です。
 
 ## モデルの選び方
 
 | モデル | サイズ | 精度 | 速度 | 用途 |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
+| tiny | 75MB | ★☆☆☆☆ | 最速 | テスト・プレビュー用 |
+| base | 150MB | ★★☆☆☆ | 速い | 簡易字幕 |
 | small | 500MB | ★★★☆☆ | 普通 | バランス型 |
 | medium | 1.5GB | ★★★★☆ | やや遅い | 高精度 |
 | large-v3 | 3GB | ★★★★★ | 遅い | 最高精度 |
 | large-v3-turbo | 1.6GB | ★★★★☆ | 普通 | **おすすめ（large-v3 の高速版）** |
+| kotoba-whisper | 1.5GB | ★★★★☆ | 速い | **日本語特化（faster-whisper 専用）** |
 
 > 💡 迷ったら **large-v3-turbo** がおすすめです。large-v3 に近い精度で、速度は約 2 倍速いです。
+>
+> 💡 日本語のみの動画なら **kotoba-whisper** も高速で高精度です（faster-whisper バックエンド専用）。
 
 ---
 
 ## 主な機能一覧
 
-- **2 つのバックエンド**: faster-whisper / openai-whisper を切り替え可能
-- **4 種類のモデル**: small / medium / large-v3 / large-v3-turbo
-- **書式テンプレート**: .object ファイルでフォント・色・サイズを適用
-- **言語選択**: 自動判定 / 日本語 / 英語 / 中国語 / 韓国語
-- **CUDA GPU 対応**: 自動検出（CPU フォールバックあり）
-- **SRT エクスポート**: 字幕データを .srt ファイルに出力
-- **テキスト処理**: 句読点削除 / !? 削除 / 全半角正規化
-- **字幕延長（linger）**: 発話終了後も指定秒数だけ字幕を表示し続ける
-- **レイヤー自動シフト**: 配置先に既存オブジェクトがあれば自動で次のレイヤーへ
-- **自動インストール**: セットアップボタンで選択中のバックエンド・モデルを導入
+* **2 つのバックエンド**: faster-whisper / openai-whisper を切り替え可能
+* **7 種類のモデル**: tiny / base / small / medium / large-v3 / large-v3-turbo / kotoba-whisper
+* **書式テンプレート**: .object ファイルでフォント・色・サイズを適用
+* **言語選択**: 自動判定 / 日本語 / 英語 / 中国語 / 韓国語
+* **CUDA GPU 対応**: 自動検出（CPU フォールバックあり）
+* **Batched推論**: GPU 並列処理で高速化（v2.8）
+* **SRT エクスポート**: 字幕データを .srt ファイルに出力
+* **テキスト処理**: 句読点削除 / !? 削除 / 全半角正規化
+* **字幕延長（linger）**: 発話終了後も指定秒数だけ字幕を表示し続ける
+* **レイヤー自動シフト**: 配置先に既存オブジェクトがあれば自動で次のレイヤーへ
+* **自動インストール**: セットアップボタンで選択中のバックエンド・モデルを導入
+* **ヒント文（initial_prompt）**: 固有名詞や専門用語の認識精度を向上（v2.8）
+* **ホットワード**: 特定の単語をデコーダでブースト（v2.8）
+* **ハルシネーション対策**: 前文無効化・品質フィルタ・無音区間閾値（v2.8）
+* **温度自動フォールバック**: Temp=0 で段階的に温度を上げて再試行（v2.8）
+* **セグメント品質フィルタ**: 低信頼度・非音声セグメントを自動除外（v2.8）
+* **kotoba-whisper**: 日本語に特化した高速モデル対応（v2.8）
+
+## 更新履歴
+
+### v2.8（2026-04-09）
+
+**新機能:**
+* ヒント文（initial_prompt）で固有名詞・専門用語の認識精度を向上
+* ハルシネーション対策（condition_on_previous_text 無効化）
+* temperature 自動フォールバック（0→0.2→0.4→0.6→0.8→1.0）
+* word_timestamps 切替 / repetition_penalty（繰返し抑制）
+* セグメント品質フィルタ（avg_logprob / no_speech_prob による自動除外）
+* hallucination_silence_threshold（無音区間でのハルシネーション抑制）
+* ホットワード対応（カンマ区切りで特定の単語をブースト）
+* kotoba-whisper モデル対応（日本語特化・高速、faster-whisper 専用）
+* Batched推論（GPU 並列処理による高速化）
+* tiny / base モデルを選択肢に追加
+
+**改善:**
+* SDK 構造体を AviUtl2 beta40 に更新（EDIT_SECTION / HOST_APP_TABLE の新メンバー対応）
+* ビルドシステム安定化: `/utf-8` `/wd4828` コンパイルオプション追加
+* ソースファイル出力を BOM なし UTF-8 に修正（日本語環境でのビルドエラー対策）
+* ビルドログの文字化け修正（Console OutputEncoding を UTF-8 に設定）
+
+### v2.5（2026-02-20）
+
+* 初回公開版
 
 ## フォルダ構成（自動生成）
 
@@ -237,13 +304,15 @@ data/Plugin/whisper_subtitle/
 📄 ログの場所: `data/Plugin/whisper_subtitle/whisper_debug.log`
 
 | 症状 | 原因 | 対処 |
-|------|------|------|
+| --- | --- | --- |
 | 「ffmpeg が見つかりません」 | ffmpeg が未インストールまたはパスが通っていない | 初期設定タブで ffmpeg のパスを指定 |
 | 「Python が見つかりません」 | Python が未インストールまたはパスが通っていない | Python 3.10〜3.12 をインストールし、パスを指定 |
 | CUDA エラー | NVIDIA GPU 非対応 or ドライバが古い | Device を CPU に変更 |
 | 文字起こしが空 | 音声がない / 非常に短いクリップ | 音声付きのクリップか確認 |
 | 処理が極端に遅い（数分以上） | GPU が使われていない | ログで `device=cpu` になっていないか確認。セットアップを再実行 |
 | セットアップが途中で止まる | ネットワーク接続の問題 | インターネット接続を確認し、再度セットアップ |
+| kotoba-whisper でエラー | openai-whisper バックエンドを使用している | Backend を `faster-whisper` に変更（kotoba-whisper は faster-whisper 専用） |
+| Batched が効かない | CPU モードで実行している | Device を `CUDA (GPU)` に変更（Batched は GPU 専用） |
 
 ### うまくいかないときは
 
@@ -255,10 +324,11 @@ data/Plugin/whisper_subtitle/
 
 ## 注意事項
 
-- 初回の字幕生成時やモデル変更時は、バックエンドやモデルの自動ダウンロードが発生するため時間がかかります（large-v3 で約 3GB）
-- 事前にセットアップボタンで済ませておくとスムーズです
-- openai-whisper バックエンドでは PyTorch が自動インストールされます。CUDA 版が必要な場合はセットアップボタンから再インストールしてください
-- Python 3.13 以降は PyTorch が未対応の可能性があります。3.10〜3.12 を推奨します
+* 初回の字幕生成時やモデル変更時は、バックエンドやモデルの自動ダウンロードが発生するため時間がかかります（large-v3 で約 3GB）
+* 事前にセットアップボタンで済ませておくとスムーズです
+* openai-whisper バックエンドでは PyTorch が自動インストールされます。CUDA 版が必要な場合はセットアップボタンから再インストールしてください
+* Python 3.13 以降は PyTorch が未対応の可能性があります。3.10〜3.12 を推奨します
+* kotoba-whisper および Batched推論は faster-whisper バックエンド専用です
 
 ---
 
@@ -277,7 +347,7 @@ MIT License（[LICENSE](LICENSE) 参照）
 ### 開発に使用した SDK
 
 | SDK | ライセンス | 権利者 |
-|-----|-----------|--------|
+| --- | --- | --- |
 | [AviUtl ExEdit2 Plugin SDK](https://github.com/Kenkun/AviUtl-ExEdit2-Plugin-SDK) | MIT | Copyright (c) 2025 Kenkun |
 
 SDK の利用条件に基づき、SDK のライセンス表記を本リポジトリの LICENSE ファイルに含めています。
@@ -289,21 +359,22 @@ SDK の利用条件に基づき、SDK のライセンス表記を本リポジト
 セットアップまたは字幕生成の実行時に、ユーザーの環境に以下のソフトウェアが **公式の配布元から** 自動的にダウンロード・インストールされます。これらはすべて各プロジェクトが公開している標準的なインストール方法（`pip install`、HuggingFace Hub）を使用しています。
 
 | ライブラリ / モデル | ライセンス | 配布元 | ダウンロード契機 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | [faster-whisper](https://github.com/SYSTRAN/faster-whisper) | MIT | PyPI | Backend = `faster-whisper` 選択時のセットアップまたは初回字幕生成 |
 | [CTranslate2](https://github.com/OpenNMT/CTranslate2) | MIT | PyPI（faster-whisper の依存） | faster-whisper と同時 |
 | [OpenAI Whisper](https://github.com/openai/whisper) | MIT | PyPI | Backend = `whisper` 選択時のセットアップまたは初回字幕生成 |
 | [PyTorch](https://pytorch.org/) | BSD-3-Clause | PyPI（pytorch.org） | openai-whisper 選択時に CUDA 版を自動インストール |
 | NVIDIA CUDA ライブラリ (cublas, cudnn) | [NVIDIA EULA](https://docs.nvidia.com/cuda/eula/) | PyPI（PyTorch 依存） | CUDA 版 PyTorch と同時 |
-| Whisper モデル (small, medium, large-v3-turbo) | MIT | [HuggingFace Hub](https://huggingface.co/Systran) / [OpenAI](https://github.com/openai/whisper) | セットアップ時またはモデル変更後の初回字幕生成 |
+| Whisper モデル (tiny, base, small, medium, large-v3-turbo) | MIT | [HuggingFace Hub](https://huggingface.co/Systran) / [OpenAI](https://github.com/openai/whisper) | セットアップ時またはモデル変更後の初回字幕生成 |
 | Whisper モデル (large-v3) | Apache-2.0 | [HuggingFace Hub](https://huggingface.co/Systran/faster-whisper-large-v3) | 同上 |
+| [kotoba-whisper](https://huggingface.co/kotoba-tech/kotoba-whisper-v2.0-faster) | Apache-2.0 | HuggingFace Hub | Model = `kotoba-whisper` 選択時 |
 
 ### ユーザーが別途用意するソフトウェア
 
 以下はプラグインが自動ダウンロードしないため、ユーザー自身でインストールする必要があります。
 
 | ソフトウェア | ライセンス | 用途 | 備考 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | [Python](https://www.python.org/) | [PSF License](https://docs.python.org/3/license.html) | ライブラリ実行環境 | 3.10〜3.12 推奨 |
 | [FFmpeg](https://ffmpeg.org/) | LGPL 2.1+ または GPL（ビルドにより異なる） | 音声の前処理（WAV 変換） | 本プラグインは ffmpeg を外部プロセスとして呼び出すのみで、リンクや同梱はしていません |
 
@@ -324,10 +395,10 @@ SDK の利用条件に基づき、SDK のライセンス表記を本リポジト
 
 ## 免責事項
 
-- 本ソフトウェアは「現状のまま（AS IS）」で提供され、いかなる保証もありません。
-- 本ソフトウェアの使用によって生じたいかなる損害についても、作者は責任を負いません。
-- 音声認識の精度は入力音声の品質・言語・モデルに依存します。結果の正確性を保証するものではありません。
-- 自動ダウンロードされるライブラリ・モデルの利用は、各ライセンスの条件に従ってください。
+* 本ソフトウェアは「現状のまま（AS IS）」で提供され、いかなる保証もありません。
+* 本ソフトウェアの使用によって生じたいかなる損害についても、作者は責任を負いません。
+* 音声認識の精度は入力音声の品質・言語・モデルに依存します。結果の正確性を保証するものではありません。
+* 自動ダウンロードされるライブラリ・モデルの利用は、各ライセンスの条件に従ってください。
 
 ## 作者
 
