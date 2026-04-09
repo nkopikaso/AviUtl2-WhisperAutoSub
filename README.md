@@ -235,7 +235,8 @@ faster-whisper は同じモデルでも openai-whisper の 2〜4 倍高速です
 
 ---
 ## こんな感じで使っています。
-<img width="882" height="617" alt="image" src="https://github.com/user-attachments/assets/ace81bd8-5e33-490a-be40-6b8c1c36c925" />
+<img width="881" height="617" alt="image" src="https://github.com/user-attachments/assets/2b28d404-791a-4c46-b55b-9431c7ee2c4b" />
+
 
 ---
 ## 主な機能一覧
