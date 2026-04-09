@@ -234,7 +234,10 @@ faster-whisper は同じモデルでも openai-whisper の 2〜4 倍高速です
 > 💡 日本語のみの動画なら **kotoba-whisper** も高速です（**faster-whisper専用**）
 
 ---
+## こんな感じで使っています。
+<img width="882" height="617" alt="image" src="https://github.com/user-attachments/assets/ace81bd8-5e33-490a-be40-6b8c1c36c925" />
 
+---
 ## 主な機能一覧
 
 * **2 つのバックエンド**: faster-whisper / openai-whisper を切り替え可能
