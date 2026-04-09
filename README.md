@@ -211,12 +211,11 @@ AviUtl2 で Whisper を使用して動画・音声から自動で字幕を生成
 | バックエンド | 特徴 | おすすめ |
 | --- | --- | --- |
 | **faster-whisper** | 高速・省メモリ（CTranslate2 使用） | 通常はこちらがおすすめ |
-| **openai-whisper** | OpenAI 公式実装（PyTorch 使用） | 互換性重視の場合 |
+| **openai-whisper** | OpenAI 公式実装（PyTorch 使用） | 互換性重視の場合。しかし精度重視の場合はこちらがいいかも |
 
-faster-whisper は同じモデルでも openai-whisper の 2〜4 倍高速です。
-特にこだわりがなければ **faster-whisper をおすすめ** します。
+faster-whisper は同じモデルでも openai-whisper の 2〜4 倍高速ですが、精度の問題で**whisper をおすすめ** します。少し時間はかかります。
 
-> ⚠️ `kotoba-whisper` および `Batched推論` は faster-whisper バックエンド専用です。
+**> ⚠️ `kotoba-whisper` および `Batched推論` は faster-whisper バックエンド専用です。******
 
 ## モデルの選び方
 
@@ -232,7 +231,7 @@ faster-whisper は同じモデルでも openai-whisper の 2〜4 倍高速です
 
 > 💡 迷ったら **large-v3-turbo** がおすすめです。large-v3 に近い精度で、速度は約 2 倍速いです。
 >
-> 💡 日本語のみの動画なら **kotoba-whisper** も高速で高精度です（faster-whisper バックエンド専用）。
+> 💡 日本語のみの動画なら **kotoba-whisper** も高速です（**faster-whisper専用**）
 
 ---
 
