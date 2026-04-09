@@ -210,7 +210,7 @@ AviUtl2 で Whisper を使用して動画・音声から自動で字幕を生成
 
 | バックエンド | 特徴 | おすすめ |
 | --- | --- | --- |
-| **faster-whisper** | 高速・省メモリ（CTranslate2 使用） | 通常はこちらがおすすめ |
+| **faster-whisper** | 高速・省メモリ（CTranslate2 使用） | 速度重視の場合はこちらがおすすめ |
 | **openai-whisper** | OpenAI 公式実装（PyTorch 使用） | 互換性重視の場合。しかし精度重視の場合はこちらがいいかも |
 
 faster-whisper は同じモデルでも openai-whisper の 2〜4 倍高速ですが、精度の問題で**whisper をおすすめ** します。少し時間はかかります。
