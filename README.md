@@ -187,8 +187,7 @@ https://github.com/nkopikaso/AviUtl2-WhisperAutoSub/releases
 | **faster-whisper** | 高速・省メモリ（CTranslate2 使用） | 通常はこちらがおすすめ |
 | **openai-whisper** | OpenAI 公式実装（PyTorch 使用） | 互換性重視の場合 |
 
-faster-whisper は同じモデルでも openai-whisper の 2〜4 倍高速です。
-特にこだわりがなければ **faster-whisper をおすすめ** します。
+faster-whisper は同じモデルでも openai-whisper の 2〜4 倍高速ですが精度を考えると**openai-whisper をおすすめ** します。
 
 ## モデルの選び方
 
