@@ -351,7 +351,7 @@ MIT License（[LICENSE](LICENSE) 参照）
 
 | SDK | ライセンス | 権利者 |
 | --- | --- | --- |
-| [AviUtl ExEdit2 Plugin SDK](https://github.com/Kenkun/AviUtl-ExEdit2-Plugin-SDK) | MIT | Copyright (c) 2025 Kenkun |
+| [AviUtl ExEdit2 Plugin SDK] | MIT | Copyright (c) 2025 Kenkun |
 
 SDK の利用条件に基づき、SDK のライセンス表記を本リポジトリの LICENSE ファイルに含めています。
 
