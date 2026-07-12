@@ -261,8 +261,17 @@ faster-whisper は同じモデルでも openai-whisper の 2〜4 倍高速です
 
 ## 更新履歴
 
-### v2.8（2026-04-09）
+## v2.8.1
+### 修正
+- **高DPI対応:** ディスプレイ拡大率が125%/150%などのときに、Whisper SubtitleウィンドウのUI（ラベル・ボタン）が重なって表示される不具合を修正しました。UIがシステムDPIに追従するようになっています。拡大率100%の環境では表示に変化はありません。
+### 内部改善（v2.8系の安定化を同梱）
+- 長時間処理のタイムアウト制御
+- テキスト分割処理の不具合修正
+- 多重実行の防止（処理中はボタンを無効化）
+### 更新方法
+AviUtl2のPluginフォルダにある旧 `WhisperAutoSub.aux2` を、本リリースの `WhisperAutoSub.aux2` で上書きしてください。
 
+### v2.8（2026-04-09）
 **新機能:**
 * ヒント文（initial_prompt）で固有名詞・専門用語の認識精度を向上
 * ハルシネーション対策（condition_on_previous_text 無効化）
@@ -274,7 +283,6 @@ faster-whisper は同じモデルでも openai-whisper の 2〜4 倍高速です
 * kotoba-whisper モデル対応（日本語特化・高速、faster-whisper 専用）
 * Batched推論（GPU 並列処理による高速化）
 * tiny / base モデルを選択肢に追加
-
 **改善:**
 * SDK 構造体を AviUtl2 beta40 に更新（EDIT_SECTION / HOST_APP_TABLE の新メンバー対応）
 * ビルドシステム安定化: `/utf-8` `/wd4828` コンパイルオプション追加
@@ -282,13 +290,9 @@ faster-whisper は同じモデルでも openai-whisper の 2〜4 倍高速です
 * ビルドログの文字化け修正（Console OutputEncoding を UTF-8 に設定）
 
 ### v2.5（2026-02-20）
-
 * 初回公開版
-
 ## フォルダ構成（自動生成）
-
 字幕生成またはセットアップを実行すると、以下のフォルダが自動的に作成されます。
-
 ```
 data/Plugin/whisper_subtitle/
 ├── whisper_helper.py    … Python ヘルパースクリプト（自動生成）
