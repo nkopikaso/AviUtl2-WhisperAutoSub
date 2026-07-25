@@ -264,11 +264,6 @@ faster-whisper は同じモデルでも 2〜4 倍高速ですが、**日本語�
 > v2.9 では自動的に単語タイムスタンプを無効化して動作させています（v2.8 以前はクラッシュしていました）。
 
 ---
-## こんな感じで使っています。
-<img width="881" height="617" alt="image" src="https://github.com/user-attachments/assets/2b28d404-791a-4c46-b55b-9431c7ee2c4b" />
-
-
----
 ## 主な機能一覧
 
 * **2 つのバックエンド**: faster-whisper / openai-whisper を切り替え可能
