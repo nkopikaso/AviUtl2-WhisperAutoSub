@@ -241,7 +241,6 @@ AviUtl2 で Whisper を使用して動画・音声から自動で字幕を生成
 | **faster-whisper** | 高速・省メモリ（CTranslate2 使用）。PyTorch 不要（約 4.3GB の節約） | 速度重視・軽量構成の場合 |
 
 faster-whisper は同じモデルでも 2〜4 倍高速ですが、**日本語の認識精度は openai-whisper に劣ります**。
-同じ音声での比較では、`料金が1000点` を `男っこえ100万点` と誤認するなど、意味が壊れる差が出ました。
 **日本語では whisper + large-v3-turbo を推奨**します。
 
 > ⚠️ `kotoba-whisper` / `Batched推論` / `VAD無音カット` / `繰返し抑制` は faster-whisper 専用です。
