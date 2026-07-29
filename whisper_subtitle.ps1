@@ -1,5 +1,28 @@
 ﻿##############################################################################
-# Whisper Subtitle Plugin for AviUtl2 - v2.9.2
+# Whisper Subtitle Plugin for AviUtl2 - v2.9.25
+# v2.9.25: テストログ(testlog_dir.txt 指定時)を固定名 whisper_testlog.txt の上書きに変更。従来は日時つきの名前で生成のたびに新規作成され、削除も世代管理も無いため配布先で溜まり続けていた。
+# v2.9.24: 【K1/重大】faster-whisper で入れたモデルが「未導入」と誤判定され字幕生成が完全にブロックされる問題を修正(利用者report)。HuggingFaceキャッシュ形式 models--<配布元>--<リポジトリ> を見る処理が kotoba の特例にしか無かった。全モデルで後方一致により検出する。
+# v2.9.23: 【J1】シンボリックリンク権限が無い環境(WinError 1314)でモデルDLが失敗する問題を修正。1314はPermissionErrorにならずhuggingface_hubのフォールバックに入らないため、踏んだときだけコピー経路を強制して再試行する。【J2】ffmpegのDLに $ProgressPreference の抑止・1回リトライ・タイムアウト明示を追加。
+# v2.9.22: 【I1】幻聴フィルタが openai 経路にしか無く、faster-whisper を選ぶと一切動いていなかった問題を修正(実機ログで faster 6本すべて0件/openai 5本すべて1件を確認)。hallucination_phrases.txt の編集も faster では無効だった。両経路を対称化。
+# v2.9.21: 【H1/重大】Pass2 が利用者の既存オブジェクトを削除しうる経路を修正。Pass1 の成否を per-item で記録し、Pass2 は自分が置いた item だけを削除/再作成するようにした。あわせてレイヤー探索の枯渇を記録し、配置失敗を完了メッセージに出すようにした。
+# v2.9.20: クリップindexの位置結合バグを修正(音声なしクリップの後ろに本編があると字幕が全滅)。JSONにidxを明示して往復。あわせて同一クリップ(ファイル+区間+再生位置が完全一致)の重複転写を排除。
+# v2.9.19: 字幕本文に実際の改行が入ると結果行/エイリアスが壊れて字幕が消える経路を塞いだ(プロンプトの反響で入りうる)。出力を _push() に集約し LF/CR を空白へ落とす。2行表示のリテラル\nはそのまま。
+# v2.9.18: iniの保存/復元でプロンプトが壊れる問題を修正。バックスラッシュをエスケープしていなかったため、「C:\new」のような文字列が復元時に改行へ化けていた(実測8ケース中4ケース)。IniEscape/IniUnescape に集約し hotwords も同じ扱いに揃えた。
+# v2.9.17: フェーズ別の所要時間をログに追加(抽出/Python/モデルロード/転写)。効率化を推測でやらないための計測。機能の変更は無し。
+# v2.9.16: JSONエスケープの不備を修正。prompt はタブ等の制御文字を素通し、hotwords は" と \ しか見ておらず、貼り付けでタブが混入すると batch.json が壊れて字幕生成が丸ごと失敗していた。JsonEscape() に集約し4箇所すべてで使用。
+# v2.9.15: 監査④。音声トラックの無い動画でも落ちないことを確認(ffmpegが-22で止まり正しく検出される)。ただしメッセージが「ffmpegを確認してください」で誤誘導だったため、原因別に出し分けるようにした。
+# v2.9.14: 監査③(C++)の修正4件。プロジェクトfpsの無検証(ゼロ除算クラッシュ)、生成タイムアウトの固定600秒(長尺/CPUで全部失う)を音声長比例に、beam_sizeとtemperatureの上限追加。
+# v2.9.13: 監査②の修正2件。無音ファイルで幻聴が残る問題(VAD不可と発話ゼロの取り違え)と、セグメント/ポーズ分割パートをまたいだ字幕の重なりを修正。
+# v2.9.12: ★文節区切りON時に原文の空白が全部消えるバグを修正(英語字幕が単語連結で壊れていた)。形態素解析は空白をトークンにしないため表層形の連結で落ちていた。原文を走査して拾い直す。
+# v2.9.11: 監査①(設定×バックエンド)の修正4件。ホットワードをopenai選択時にグレーアウト、単語タイムスタンプの強制ONをUIに反映、SRTエクスポートの生成中ガード、ffmpegDLボタンの二重実行防止。
+# v2.9.10: 実機報告2件の修正。(1)「そういう」等が語の途中で割れる問題を文節規則で修正。(2)チャンクが1つのとき単語時刻もVADスナップも使わず即returnしていた問題を修正し、さらに単語間0.6秒以上の間でセグメントを分割(whisperがポーズをまたいで統合すると字幕が早く出るため)。
+# v2.9.9: 配布対応。テストログを既定OFF(testlog_dir.txt がある場合のみ出力)にし、幻聴フレーズ辞書を hallucination_phrases.txt で差し替え・無効化できるようにした。
+# v2.9.8: ★品質フィルタのしきい値を -1.0 から -3.0 に緩和。実測で正しい字幕が logprob=-1.029 で捨てられていた(ゴミは-5.865)。あわせてテストログ出力先を testlog_dir.txt で指定可能にし、kotoba-whisper のラベル表示切れを修正。
+# v2.9.7: 温度フォールバックの上限を 1.0 から 0.4 に変更。実機で温度1.0まで上がった回にデコードが崩壊し(英語のゴミを出力・logprob=-5.865)、15〜45秒の本物の字幕が丸ごと失われたため。ループ脱出の能力は 0.4 までで残す。
+# v2.9.6: 字幕生成完了時に「設定+実行情報+SRT」をデスクトップの SRTテストログ フォルダへ自動保存する機能を追加。毎回手でSRTエクスポートしなくても実行間の比較ができる。あわせて beam/device/VAD 等をログに記録するようにした(従来は残っていなかった)。
+# v2.9.5: v2.9.4のエンベロープ方式を撤回(本物の字幕を3件消す事故)。幻聴判定はフレーズ辞書+VAD重なり+フレーズ占有率の3条件のみにし、辞書に無い語は絶対に落ちない設計に戻した。あわせて品質フィルタが捨てた内容をログに出すようにした(切り分け用)。
+# v2.9.4: 幻聴除去を作り直し。v2.9.3 の hallucination_silence_threshold は幻聴を消さず 別の定型句に化けさせるだけ(実機で「ご視聴ありがとうございました」→「それではまた」)だったので撤去。判定を「発話エンベロープの外側 かつ VAD重なりが薄い」主体に変更し、文言列挙に依存しないようにした。
+# v2.9.3: openai-whisper 側にも hallucination_silence_threshold=2.0 を渡すよう修正。faster-whisper にだけ渡していたため、whisper 選択時のみ無音区間に 「Thank you」「ご視聴ありがとうございました」等の幻聴字幕が生成されていた。
 #
 # v2.9.2: (1)Batched単独で字幕生成が失敗する不具合を修正。BatchedInferencePipelineは音声をVADで区切って
 # バッチを作るためVADが無効だと成立しない。v2.8までvad_filterがTrue固定で隠れていたが、v2.9で既定OFFに
@@ -95,26 +118,26 @@
 #   - [v2.8] ソース出力をBOMなしUTF-8に修正 (日本語環境対応)
 #   - [v2.8] ビルドログの文字化け修正 (Console OutputEncoding)
 #
-# ビルド: .\whisper_subtitle_v2_9_2.ps1 [出力ディレクトリ]
+# ビルド: .\whisper_subtitle_v2_9_25.ps1 [出力ディレクトリ]
 # 要件: Visual Studio 2022, CMake 3.15+
-# 出力: whisper_subtitle_v2_9_2.aux2 (既存の whisper_subtitle_v2_8_10.aux2 / whisper_subtitle.aux2 は上書きしない)
+# 出力: whisper_subtitle_v2_9_25.aux2 (既存の whisper_subtitle_v2_8_10.aux2 / whisper_subtitle.aux2 は上書きしない)
 #
 # Note: [v2.8.8] PyTorchのCUDA版はnvidia-smiのCUDA Versionから自動判定(cu121/cu118/cpu)して導入
 ##############################################################################
 
 $d = if($args.Count -gt 0){ $args[0] } else { [Environment]::GetFolderPath("Desktop") }
-$projDir = "$d\aviutl2_dev\whisper_subtitle_plugin_v2_9_2"
+$projDir = "$d\aviutl2_dev\whisper_subtitle_plugin_v2_9_25"
 $src = "$projDir\src"
-$logFile = "$d\whisper_build_log_v2_9_2.txt"
+$logFile = "$d\whisper_build_log_v2_9_25.txt"
 $ErrorActionPreference = "Continue"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 "" | Out-File $logFile -Encoding UTF8
-"Whisper Subtitle v2.9.2 Build $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" | Out-File $logFile -Append -Encoding UTF8
+"Whisper Subtitle v2.9.25 Build $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" | Out-File $logFile -Append -Encoding UTF8
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
-Write-Host " Whisper Subtitle v2.9.2 - Build" -ForegroundColor Cyan
+Write-Host " Whisper Subtitle v2.9.25 - Build" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -356,6 +379,66 @@ static std::string g_templatePath, g_templateContent;
 static std::string g_ffmpegPath, g_pythonPath;
 static std::string g_fwSpPath, g_owSpPath; // custom site-packages dirs for faster-whisper / openai-whisper
 static int g_projectRate = 30;
+static int g_extractNoAudio = 0; // v2.9.15: 音声トラックが無くて抽出できなかったクリップ数
+
+// v2.9.16: JSON文字列のエスケープ。従来は prompt / hotwords / ffmpegパス / wavパス の
+// 4箇所にそれぞれ別々に書かれていて、抜けている文字が箇所ごとに違った。
+//   prompt   : タブ等の制御文字を素通し
+//   hotwords : " と \ しか見ていない
+// Python の json.load は文字列中の生の制御文字を拒否するため(実測: タブで
+// "Invalid control character")、混入すると batch.json が壊れて
+// **字幕生成が丸ごと失敗**する。Excel等から貼り付けるとタブが入るので現実に起きうる。
+// UTF-8のマルチバイト(0x80以上)はそのまま通す。
+// v2.9.18: ini は行単位の key=value なので、値の改行を畳む必要がある。
+// 従来は改行だけ畳んで **バックスラッシュ自体をエスケープしていなかった**ため、
+// プロンプトに "C:\\new" のような文字列があると復元時に改行へ化けて壊れていた
+// (実測: 8ケース中4ケースで往復が壊れる)。プロンプトは再起動のたびに復元されるので
+// 毎回壊れ、しかも認識に効くパラメータなので静かに精度が落ちる。
+static std::string IniEscape(const std::string& v){
+    std::string o; o.reserve(v.size() + 8);
+    for(char c : v){
+        if(c == '\\')      o += "\\\\";
+        else if(c == '\n') o += "\\n";
+        else if(c == '\r') {}
+        else               o += c;
+    }
+    return o;
+}
+static std::string IniUnescape(const std::string& v){
+    std::string o; o.reserve(v.size());
+    for(size_t i = 0; i < v.size(); i++){
+        if(v[i] == '\\' && i + 1 < v.size()){
+            if(v[i+1] == 'n'){  o += '\n'; i++; continue; }
+            if(v[i+1] == '\\'){ o += '\\'; i++; continue; }
+        }
+        o += v[i];
+    }
+    return o;
+}
+
+static std::string JsonEscape(const std::string& in){
+    std::string o;
+    o.reserve(in.size() + 8);
+    for(unsigned char c : in){
+        switch(c){
+            case '"':  o += "\\\""; break;
+            case '\\': o += "\\\\"; break;
+            case '\n': o += "\\n";  break;
+            case '\r': o += "\\r";  break;
+            case '\t': o += "\\t";  break;
+            case '\b': o += "\\b";  break;
+            case '\f': o += "\\f";  break;
+            default:
+                if(c < 0x20){
+                    char b[8]; sprintf_s(b, "\\u%04x", (unsigned)c);
+                    o += b;
+                } else {
+                    o += (char)c;
+                }
+        }
+    }
+    return o;
+}
 
 #define WM_UPDATE_STATUS (WM_USER + 100)
 #define WM_UPDATE_PROGRESS (WM_USER + 101)
@@ -479,7 +562,7 @@ static void SetPathLabel(HWND label, const std::string& path, const char* defaul
 // =========================================================================
 
 static const char* g_pyHelper = R"PYHELPER(# -*- coding: utf-8 -*-
-import sys, json, os, traceback, glob
+import sys, json, os, traceback, glob, re
 
 # Add local site-packages (whisper_subtitle/site-packages)
 _script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -619,30 +702,57 @@ def _morph_group(text, maxc):
     except Exception:
         return [text]
     # 文節へ: 自立語で新文節を開始、付属語(助詞/助動詞/記号/接尾辞)は前にくっつける
+    # v2.9.12: 形態素解析は空白をトークンとして返さないため、表層形を素朴に連結すると
+    # 原文の空白が全部消える(実測: "Hello world this is" -> "Helloworldthisis")。
+    # 原文を走査して、形態素の間に落ちた文字を拾い直す。
     bun = []
     cur = ""
+    prev = None
+    pos = 0
     for w in tg(text):
-        pos = w.feature.pos1
-        if (not cur) or pos in ("助詞", "助動詞", "補助記号", "記号", "接尾辞"):
-            cur += w.surface
+        sfc = w.surface
+        idx = text.find(sfc, pos) if sfc else pos
+        if idx < 0:
+            idx = pos          # 見つからない(正規化された等)ときは諦めて連結だけする
+            gap = ""
         else:
-            bun.append(cur)
-            cur = w.surface
-    if cur:
-        bun.append(cur)
+            gap = text[pos:idx]  # 形態素の間に落ちた文字 = 主に空白
+        pos = idx + len(sfc)
+        p1 = w.feature.pos1
+        attach = (not cur) or p1 in ("助詞", "助動詞", "補助記号", "記号", "接尾辞")
+        # v2.9.10: 「そういう/こういう/どういう/ああいう/っていう」を語の途中で割らない。
+        # unidic は そう(副詞) + いう(動詞,一般) と分けるため「いう」で新文節が始まり、
+        # 実機で「ある文」/「その続き」と切れていた。
+        # 直前が副詞・助詞で、今の語の語彙素が「言う」なら繋げる。
+        if not attach and prev is not None:
+            lemma = str(getattr(w.feature, "lemma", "") or "")
+            if lemma == "\u8a00\u3046" and prev.feature.pos1 in ("\u526f\u8a5e", "\u52a9\u8a5e"):
+                attach = True
+        if attach:
+            cur = (cur + gap + sfc) if cur else sfc   # 先頭の空白は捨てる
+        else:
+            bun.append(cur + gap)   # 空白は前の文節の末尾に付ける
+            cur = sfc
+        prev = w
+    if cur or pos < len(text):
+        bun.append(cur + text[pos:])   # 末尾に残った文字(空白等)も拾う
     if maxc <= 0:
         maxc = 20
     chunks = []
     cur = ""
     for b in bun:
         if cur and len(cur) + len(b) > maxc:
-            chunks.append(cur)
-            cur = b
+            # チャンク境界 = 改行位置なので、末尾の空白は残さない
+            chunks.append(cur.rstrip())
+            cur = b.lstrip()
         else:
             cur += b
     if cur:
-        chunks.append(cur)
-    return chunks if chunks else [text]
+        chunks.append(cur.rstrip())
+    chunks = [c for c in chunks if c]
+    if chunks:
+        return chunks
+    return [text] if text else []
 
 )PYHELPER" R"PYHELPER(
 _vad_mode = "none"
@@ -692,6 +802,92 @@ def _speech_runs(path, hop=0.02, min_run=0.20, hang=0.12):
     _vad_mode = "none"
     return []
 
+# v2.9.3: whisper が無音区間で高確信度に生成する定型句 (学習データ由来の幻聴)。
+# no_speech_prob も avg_logprob も正常値になるため既存の品質フィルタでは原理的に捕まらない。
+#   実測値: 「次回予告」 no_speech_prob=0.000 / avg_logprob=-0.347 / VAD重なり=0%
+# v2.9.5: whisper が無音区間で高確信度に生成する定型句 (学習データ由来の幻聴)。
+# 実測: 開発者の動画で 45.55秒の幻聴は 7回中7回、下のどれかで必ず出た。
+# no_speech_prob も avg_logprob も正常値になるため既存の品質フィルタでは捕まらない。
+#   実測: 「次回予告」 no_speech_prob=0.000 / avg_logprob=-0.347
+# ここに載っていない語は絶対に落ちない = 本物の字幕が消える事故が起きない設計。
+_HAL_PHRASES_DEFAULT = (
+    "ご視聴ありがとう", "ご視聴いただきありがとう", "ご覧いただきありがとう",
+    "チャンネル登録", "次回予告", "ではまた", "またお会いしましょう",
+    # v2.9.15: 別の動画の末尾に8回中6回出た(開発者が「言っていない」と確認済み)。
+    # 日常会話でも使う語なので、実際に喋った回は VAD重なりとフレーズ占有率が守りになる。
+    # これまで hallucination_phrases.txt にしか無く、ファイルを消すと復活する状態だった。
+    "またね",
+    "thankyou", "thanksforwatching", "wellberightback", "amaraorg",
+)
+
+def _hal_norm(t):
+    """照合専用の正規化。英数字とかな漢字だけ残して記号や空白を落とす。
+    ★出力される字幕テキストには一切手を加えない。ピリオドもアポストロフィも
+      字幕にはそのまま残る (英語圏の利用者の表記を変えてしまわないため)。"""
+    return re.sub(r"[^0-9a-z\u3040-\u30ff\u4e00-\u9fff]", "", t.lower())
+
+def _load_hal_phrases():
+    """v2.9.9: 辞書は whisper_subtitle/hallucination_phrases.txt で差し替えられる。
+    1行1フレーズ、# 始まりはコメント。ファイルが無ければ上の既定値を使う。
+    ★空ファイルを置けば幻聴フィルタを丸ごと無効化できる。
+      配布先で誤爆したとき、リビルドを待たずに利用者自身が止められるようにするため。"""
+    global _HAL_SRC
+    path = os.path.join(_script_dir, "hallucination_phrases.txt")
+    try:
+        if os.path.exists(path):
+            out = []
+            with open(path, encoding="utf-8-sig") as f:
+                for ln in f:
+                    ln = ln.strip()
+                    if ln and not ln.startswith("#"):
+                        n = _hal_norm(ln)
+                        if n:
+                            out.append(n)
+            _HAL_SRC = "file"
+            return tuple(out)
+    except Exception:
+        pass
+    _HAL_SRC = "builtin"
+    return _HAL_PHRASES_DEFAULT
+
+_HAL_SRC = "builtin"
+_HAL_PHRASES = _load_hal_phrases()
+
+def _is_hallucination(text, start, end, runs):
+    """幻聴セグメントか判定する。落とす条件は3つすべてを満たす場合のみ。
+
+      (1) 既知の定型幻聴フレーズを含む
+      (2) そのフレーズが文の半分以上を占める
+          "Thank you" 単独は落とすが "Thank you so much for watching everyone"
+          のような実発話には反応しない (英語圏での誤爆防止)
+      (3) 実際には発話されていない (VAD重なりが5割未満)
+          本当に「ご視聴ありがとうございました」と喋った場合は重なりが濃いので残る
+
+    v2.9.4 で試した「発話エンベロープの外側なら落とす」方式は撤回した。
+    辞書に無い語まで落とせる代わりに、VADが後半の孤立した発話を拾えないと
+    本物の字幕をまとめて消してしまい、実機で実際に3件消えた。
+    VADが使えない環境 (runs が空) では判定しない = 従来どおりの挙動。
+    """
+    # v2.9.13: 「VADが使えない(none)」と「VADは動いたが発話が0個」を区別する。
+    # 後者は無音ファイルなどで起きる、幻聴が確実な状況。実測で完全な無音20秒と
+    # 極小ノイズ20秒のどちらでも "Thank you." が生成され、ここで見逃していた。
+    if not runs and _vad_mode == "none":
+        return False
+    n = _hal_norm(text)
+    if not n:
+        return False
+    hit = 0
+    for p in _HAL_PHRASES:
+        if p in n and len(p) > hit:
+            hit = len(p)
+    if hit == 0 or hit / len(n) < 0.5:
+        return False
+    dur = max(end - start, 1e-6)
+    ov = 0.0
+    for a, b in runs:
+        ov += max(0.0, min(end, b) - max(start, a))
+    return (ov / dur) < 0.5
+
 def _snap_start(t, runs, win=0.35):
     """字幕開始秒tを発話立ち上がりへ吸着。発話中に深く食い込んだ境界(連続トークの
     チャンク境界)は触らない。"""
@@ -718,18 +914,103 @@ def _group_spans(spans, ml):
         out.append((g[0][0], g[-1][1], "\\n".join(x[2] for x in g)))
     return out
 
+# v2.9.10: 単語間がこの秒数以上あいていたらセグメントを分ける。
+# 根拠: 実音声33セグメントの単語間ギャップは最大0.38秒(0.4秒以上は0件)だった。
+# 0.6秒なら通常の息継ぎ・読点では発火せず、既存の切れ方を変えない。
+# 発火数は whisper_debug.log の Morph timing 行 pause-split= で確認できる。
+_PAUSE_GAP = 0.6
+
+def _split_by_pause(text, words, sf, ef, tl_start, fps, stats):
+    """whisper が間をまたいで2つの発話を1セグメントにまとめたとき、そこで分ける。
+
+    まとめられると後半の字幕が実際に喋る前から表示される(実機で約1.3秒早く出た)。
+    words の連結が text と一致することは実測で確認済みだが、
+    **一致しない場合は分割しない**(安全側。テキストを壊すより早く出る方がまし)。
+    """
+    if not words:
+        return [(text, words, sf, ef)]
+    ws = [(w, s, e) for (w, s, e) in words if s is not None and e is not None]
+    if len(ws) < 2:
+        return [(text, words, sf, ef)]
+    if "".join(w for w, _, _ in ws).strip() != text.strip():
+        return [(text, words, sf, ef)]
+    groups = [[ws[0]]]
+    for prev, nxt in zip(ws, ws[1:]):
+        if (nxt[1] - prev[2]) >= _PAUSE_GAP:
+            groups.append([nxt])
+        else:
+            groups[-1].append(nxt)
+    if len(groups) <= 1:
+        return [(text, words, sf, ef)]
+    out = []
+    for g in groups:
+        gt = "".join(w for w, _, _ in g).strip()
+        if not gt:
+            continue
+        gs = tl_start + int(g[0][1] * fps)
+        ge = tl_start + int(g[-1][2] * fps)
+        if ge <= gs:
+            ge = gs + 1
+        out.append((gt, g, gs, ge))
+    if len(out) <= 1:
+        return [(text, words, sf, ef)]
+    if stats is not None:
+        stats["pause"] = stats.get("pause", 0) + (len(out) - 1)
+    return out
+
+def _last_end(results, ci):
+    """同じクリップで直前に出力した字幕の終了フレーム。無ければ None。
+
+    v2.9.13: _emit_part 内の単調クランプ(prev_e)は そのパート内でしか効かず、
+    セグメント間や ポーズ分割のパート間で字幕が重なっていた
+    (実測: 実音声353秒で 7092 -> 7075 = 0.28秒の重複)。
+    C++側の重なり解消は「前の字幕の終わりを次の開始まで縮める」方式のため、
+    縮めた結果が長さ0以下になると前の字幕が黙って消える。発生源で防ぐ。
+    """
+    if not results:
+        return None
+    p = results[-1].split("|", 3)
+    if len(p) == 4 and p[0] == str(ci):
+        try:
+            return int(p[2])
+        except ValueError:
+            pass
+    return None
+
+def _push(results, ci, s0, e0, text):
+    """結果を1行として積む。**実際の改行は必ず落とす**。
+
+    v2.9.19: 結果ファイル(`ci|sf|ef|text`)も .object のエイリアスも行単位なので、
+    本文に LF/CR が入ると
+      - 結果行が2行に割れ、C++側のパース(パイプ3つを探す)で弾かれて字幕が丸ごと消える
+      - エイリアスの「テキスト=」行が途中で切れてオブジェクト生成が壊れる
+    実データ52セグメントでは0件だったが、**プロンプトの反響**(whisper が initial_prompt を
+    そのまま出力する既知の失敗)で入りうる。プロンプト欄は複数行入力なので現実的。
+    2行表示で使うのはリテラルの \\n (バックスラッシュ+n, 2文字)なので、そちらは触らない。
+    """
+    t = text.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
+    if not t.strip():
+        return
+    results.append(f"{ci}|{s0}|{e0}|{t}")
+
 def _emit_seg(results, ci, sf, ef, text, morph_split, maxchars, words=None, tl_start=0, fps=60, stats=None, runs=None, max_lines=1):
     """seg を results に追加。morph_split 時は文節分割して複数追加。
-    v2.8.2a: words(単語タイムスタンプ)があれば実測時刻で割当。無ければ文字数比で按分。
-    v2.8.5: max_lines>1 の場合、chunks を max_lines 個ずつ束ねて1テロップ(\\n連結)にする。"""
+    v2.9.10: 先に大きなポーズでセグメントを分けてから、各パートを _emit_part に渡す。"""
     if not (morph_split and text):
-        results.append(f"{ci}|{sf}|{ef}|{text}")
+        _push(results, ci, sf, ef, text) # v2.9.19
+        return
+    for pt, pw, ps, pe in _split_by_pause(text, words, sf, ef, tl_start, fps, stats):
+        _emit_part(results, ci, ps, pe, pt, maxchars, pw, tl_start, fps, stats, runs, max_lines)
+
+def _emit_part(results, ci, sf, ef, text, maxchars, words=None, tl_start=0, fps=60, stats=None, runs=None, max_lines=1):
+    """v2.8.2a: words(単語タイムスタンプ)があれば実測時刻で割当。無ければ文字数比で按分。
+    v2.8.5: max_lines>1 の場合、chunks を max_lines 個ずつ束ねて1テロップ(\\n連結)にする。
+    v2.9.10: チャンクが1つでも単語時刻とVADスナップを通す。以前はここで即 return しており、
+    短いセグメントだけ whisper のセグメント境界がそのまま採用され開始が早まっていた。"""
+    if not text:
         return
     chunks = _morph_group(text, maxchars)
     n = len(chunks)
-    if n <= 1:
-        results.append(f"{ci}|{sf}|{ef}|{text}")
-        return
     # 1) 単語タイムスタンプによる実測割当 (v2.8.2a)
     try:
         if words:
@@ -770,7 +1051,7 @@ def _emit_seg(results, ci, sf, ef, text, morph_split, maxchars, words=None, tl_s
                                 sn.append((cs_s, ce_s, ch))
                         out = sn
                     out = _group_spans(out, max_lines)  # v2.8.5
-                    prev_e = None
+                    prev_e = _last_end(results, ci)  # v2.9.13: セグメント/パートをまたいでクランプ
                     for cs_s, ce_s, ch in out:
                         cs = tl_start + int(cs_s * fps)
                         ce = tl_start + int(ce_s * fps)
@@ -780,7 +1061,7 @@ def _emit_seg(results, ci, sf, ef, text, morph_split, maxchars, words=None, tl_s
                             ce = cs + 1
                         prev_e = ce
                         if ch:
-                            results.append(f"{ci}|{cs}|{ce}|{ch}")
+                            _push(results, ci, cs, ce, ch) # v2.9.19
                     if stats is not None:
                         stats["word"] = stats.get("word", 0) + 1
                     return
@@ -790,7 +1071,9 @@ def _emit_seg(results, ci, sf, ef, text, morph_split, maxchars, words=None, tl_s
     span = ef - sf
     total_c = sum(len(c) for c in chunks) or 1
     acc = 0
-    prev = sf
+    # v2.9.13: 按分経路も直前の字幕と重ならないように開始を押し出す
+    _le = _last_end(results, ci)
+    prev = sf if (_le is None or sf >= _le) else _le
     spans2 = []
     for i, ch in enumerate(chunks):
         acc += len(ch)
@@ -801,11 +1084,40 @@ def _emit_seg(results, ci, sf, ef, text, morph_split, maxchars, words=None, tl_s
             prev = ce
     spans2 = _group_spans(spans2, max_lines)  # v2.8.5
     for cs, ce, ch in spans2:
-        results.append(f"{ci}|{cs}|{ce}|{ch}")
+        _push(results, ci, cs, ce, ch) # v2.9.19
     if stats is not None:
         stats["prop"] = stats.get("prop", 0) + 1
 
+)PYHELPER" R"PYHELPER(
+def _is_symlink_privilege_error(e):
+    """Windows の WinError 1314 (ERROR_PRIVILEGE_NOT_HELD) か判定する。
+
+    v2.9.23【J1】シンボリックリンクの作成には開発者モードか管理者権限が要る。
+    権限が無いと 1314 が出るが、Python ではこれが **PermissionError にならず素の OSError**
+    になる(実測)。huggingface_hub の _create_symlink は FileExistsError と PermissionError
+    しか捕まえないため、コピーへのフォールバックに入らず例外が上がってしまう。
+    """
+    if getattr(e, "winerror", None) == 1314:
+        return True
+    return "1314" in str(e)
+
+def _force_hf_copy_instead_of_symlink():
+    """huggingface_hub にシンボリックリンクではなくコピーを使わせる。
+
+    v2.9.23【J1】are_symlinks_supported を False 固定にすると _create_symlink が
+    コピー経路に入る。**常時これを有効にはしない**: コピーになると blob が二重化して
+    ディスクを倍食う(large-v3-turbo で約1.5GB → 約3GB)。1314 を踏んだ環境だけ払う。
+    """
+    try:
+        from huggingface_hub import file_download as _hfd
+        _hfd.are_symlinks_supported = lambda *a, **k: False
+        return True
+    except Exception:
+        return False
+
 def _run_faster_whisper(model_size, language, device, clips, model_dir, output_path, err_path, beam_size=5, temperature=0, batch=None):
+    import time as _time
+    _t0 = _time.time()
     if batch is None: batch = {}
     try:
         from faster_whisper import WhisperModel
@@ -832,26 +1144,53 @@ def _run_faster_whisper(model_size, language, device, clips, model_dir, output_p
                 ef.write(f"Using local: {model_path}\n")
     model = None
     actual_device = device
-    if device == "cuda":
-        for ct in ["float16", "int8_float16", "int8"]:
+    # v2.9.23【J1】シンボリックリンク権限が無い環境(WinError 1314)を踏んだら、
+    # huggingface_hub にコピー経路を強制して1回だけ全体を再試行する。
+    _sym_retry_done = False
+    for _attempt in range(2):
+        _sym_err = None
+        model = None
+        actual_device = device
+        if device == "cuda":
+            for ct in ["float16", "int8_float16", "int8"]:
+                try:
+                    model = WhisperModel(model_path, device="cuda", compute_type=ct, **kwargs)
+                    with open(err_path, "a", encoding="utf-8") as ef:
+                        ef.write(f"CUDA {ct} OK\n")
+                    break
+                except Exception as e:
+                    if _is_symlink_privilege_error(e):
+                        _sym_err = e
+                    with open(err_path, "a", encoding="utf-8") as ef:
+                        ef.write(f"CUDA {ct} fail: {e}\n")
+        if model is None:
+            actual_device = "cpu"
             try:
-                model = WhisperModel(model_path, device="cuda", compute_type=ct, **kwargs)
-                with open(err_path, "a", encoding="utf-8") as ef:
-                    ef.write(f"CUDA {ct} OK\n")
-                break
+                model = WhisperModel(model_path, device="cpu", compute_type="int8", **kwargs)
             except Exception as e:
-                with open(err_path, "a", encoding="utf-8") as ef:
-                    ef.write(f"CUDA {ct} fail: {e}\n")
-    if model is None:
-        actual_device = "cpu"
-        try:
-            model = WhisperModel(model_path, device="cpu", compute_type="int8", **kwargs)
-        except Exception as e:
-            with open(output_path, "w", encoding="utf-8") as f:
-                f.write(f"ERROR|Model load failed|{e}\n")
+                if _is_symlink_privilege_error(e):
+                    _sym_err = e
+                else:
+                    with open(output_path, "w", encoding="utf-8") as f:
+                        f.write(f"ERROR|Model load failed|{e}\n")
+                    with open(err_path, "a", encoding="utf-8") as ef:
+                        ef.write(f"Model load error: {e}\n{traceback.format_exc()}")
+                    return
+        if model is not None:
+            break
+        if _sym_err is not None and not _sym_retry_done and _force_hf_copy_instead_of_symlink():
+            _sym_retry_done = True
             with open(err_path, "a", encoding="utf-8") as ef:
-                ef.write(f"Model load error: {e}\n{traceback.format_exc()}")
-            return
+                ef.write("Symlink privilege missing (WinError 1314). "
+                         "Retrying with copy instead of symlink.\n")
+            continue
+        # 1314 以外、または再試行しても駄目だった
+        _msg = _sym_err if _sym_err is not None else "unknown"
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(f"ERROR|Model load failed|{_msg}\n")
+        with open(err_path, "a", encoding="utf-8") as ef:
+            ef.write(f"Model load error: {_msg}\n{traceback.format_exc()}")
+        return
     # v2.8: Batched inference pipeline (GPU parallel processing)
     use_batched = batch.get("batched", False) and actual_device == "cuda"
     transcriber = model
@@ -866,6 +1205,7 @@ def _run_faster_whisper(model_size, language, device, clips, model_dir, output_p
                 ef.write(f"Batched init fail (using standard): {e}\n")
             transcriber = model
             use_batched = False
+    _tLoad = _time.time()  # v2.9.17: ここまでがモデルロード
     # v2.8: Read new parameters from batch
     no_prev_text = batch.get("no_prev_text", False)
     word_timestamps = batch.get("word_timestamps", True)
@@ -905,7 +1245,13 @@ def _run_faster_whisper(model_size, language, device, clips, model_dir, output_p
     morph_stats = {}
     # v2.8: Temperature fallback tuple (try 0 first, then escalate)
     if temperature == 0:
-        temp_param = (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
+        # v2.9.7: 上限を 1.0 から 0.4 に下げた。
+        # 温度0はビーム探索(決定的)だが、0より大きいとサンプリングになる。
+        # 0.6以上は粗すぎて日本語では実質ゴミしか出ず、復帰する見込みが薄い。
+        # 実機で1.0まで上がった回に「dead」「moderator」「excited」という英語のゴミが出て
+        # logprob=-5.865 まで落ち、15〜45秒の本物の字幕が丸ごと失われた。
+        # 繰り返しループから抜ける能力(フォールバック本来の目的)は 0.4 までで残す。
+        temp_param = (0.0, 0.2, 0.4)
     else:
         temp_param = float(temperature)
     with open(err_path, "a", encoding="utf-8") as ef:
@@ -913,6 +1259,7 @@ def _run_faster_whisper(model_size, language, device, clips, model_dir, output_p
     results = []
     filtered_count = 0
     for ci, clip in enumerate(clips):
+        ci = clip.get("idx", ci)  # v2.9.20【F1】C++のg_tlClips上の元indexを使う(空wavで詰まるずれ対策)
         wav_path = clip["wav"]
         tl_start = clip["timeline_start"]
         fps = clip["fps"]
@@ -942,19 +1289,36 @@ def _run_faster_whisper(model_size, language, device, clips, model_dir, output_p
             transcribe_kwargs["hallucination_silence_threshold"] = 2.0
             # Use batched pipeline or standard model
             segments, info = transcriber.transcribe(wav_path, **transcribe_kwargs)
-            runs = _speech_runs(wav_path) if morph_split else []
+            # v2.9.22【I1】幻聴判定に VAD が常時必要。openai 経路と同じ形に揃える。
+            # runs(スナップ用)は従来どおり morph_split のときだけ渡し、既存の配置挙動は変えない。
+            vad_runs = _speech_runs(wav_path)
+            runs = vad_runs if morph_split else []
             for seg in segments:
                 # v2.8: Segment quality filter
                 # Skip low-confidence segments and likely non-speech
-                if hasattr(seg, 'avg_logprob') and seg.avg_logprob < -1.0:
+                # v2.9.5: openai経路と同様、捨てた内容を必ず記録する
+                # v2.9.8: openai経路と同じ理由でしきい値を -3.0 に緩めた
+                if (getattr(seg, 'avg_logprob', 0) < -3.0
+                        or getattr(seg, 'no_speech_prob', 0) > 0.6):
                     filtered_count += 1
-                    continue
-                if hasattr(seg, 'no_speech_prob') and seg.no_speech_prob > 0.6:
-                    filtered_count += 1
+                    with open(err_path, "a", encoding="utf-8") as ef:
+                        ef.write(f"Quality filtered: [{seg.start:.2f}-{seg.end:.2f}] "
+                                 f"logprob={getattr(seg, 'avg_logprob', 0):.3f} "
+                                 f"no_speech={getattr(seg, 'no_speech_prob', 0):.3f} "
+                                 f"{seg.text.strip()[:40]}\n")
                     continue
                 sf = tl_start + int(seg.start * fps)
                 ef2 = tl_start + int(seg.end * fps)
                 text = seg.text.strip()
+                # v2.9.22【I1】幻聴フレーズ除去。従来この呼び出しは openai 経路にしか無く、
+                # faster-whisper を選ぶとフィルタが一切動かなかった(実機ログ: faster 6本すべてで
+                # Hallucination dropped が0件、openai 5本すべてで1件)。
+                # hallucination_phrases.txt を編集しても faster では効かない状態だった。
+                if _is_hallucination(text, seg.start, seg.end, vad_runs):
+                    filtered_count += 1
+                    with open(err_path, "a", encoding="utf-8") as ef:
+                        ef.write(f"Hallucination dropped: [{seg.start:.2f}-{seg.end:.2f}] {text}\n")
+                    continue
                 wl = []
                 if morph_split and getattr(seg, "words", None):
                     wl = [(w.word, w.start, w.end) for w in seg.words]
@@ -967,11 +1331,15 @@ def _run_faster_whisper(model_size, language, device, clips, model_dir, output_p
         for line in results:
             f.write(line + "\n")
     with open(err_path, "a", encoding="utf-8") as ef:
-        ef.write(f"Morph timing: word-aligned={morph_stats.get('word', 0)} proportional={morph_stats.get('prop', 0)} snap-moved={morph_stats.get('snap', 0)} vad={_vad_mode}\n")
+        ef.write(f"Morph timing: word-aligned={morph_stats.get('word', 0)} proportional={morph_stats.get('prop', 0)} snap-moved={morph_stats.get('snap', 0)} pause-split={morph_stats.get('pause', 0)} vad={_vad_mode}\n")
         ef.write(f"Done: {len(results)} segs, {filtered_count} filtered ({actual_device}{'|batched' if use_batched else ''})\n")
+        # v2.9.17: 内訳。モデルロードが支配的なのか転写なのかを毎回残す
+        ef.write(f"Timing(py): load={_tLoad - _t0:.1f}s transcribe={_time.time() - _tLoad:.1f}s\n")
 
 )PYHELPER" R"PYHELPER(
 def _run_openai_whisper(model_size, language, device, clips, model_dir, output_path, err_path, beam_size=5, temperature=0, batch=None):
+    import time as _time
+    _t0 = _time.time()
     if batch is None: batch = {}
     # v2.8: Distil/Kotoba models not supported in openai-whisper
     if model_size.startswith("distil-") or model_size.startswith("kotoba"):
@@ -1018,15 +1386,23 @@ def _run_openai_whisper(model_size, language, device, clips, model_dir, output_p
     max_lines = int(batch.get("maxlines", 1) or 1)  # v2.8.5
     if morph_split:
         word_timestamps = True  # v2.8.2a: 実測割当に単語時刻が必須
+    _tLoad = _time.time()  # v2.9.17: ここまでがモデルロード
     morph_stats = {}
     # v2.8: Temperature fallback tuple
     if temperature == 0:
-        temp_param = (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
+        # v2.9.7: 上限を 1.0 から 0.4 に下げた。
+        # 温度0はビーム探索(決定的)だが、0より大きいとサンプリングになる。
+        # 0.6以上は粗すぎて日本語では実質ゴミしか出ず、復帰する見込みが薄い。
+        # 実機で1.0まで上がった回に「dead」「moderator」「excited」という英語のゴミが出て
+        # logprob=-5.865 まで落ち、15〜45秒の本物の字幕が丸ごと失われた。
+        # 繰り返しループから抜ける能力(フォールバック本来の目的)は 0.4 までで残す。
+        temp_param = (0.0, 0.2, 0.4)
     else:
         temp_param = float(temperature)
     results = []
     filtered_count = 0
     for ci, clip in enumerate(clips):
+        ci = clip.get("idx", ci)  # v2.9.20【F1】C++のg_tlClips上の元indexを使う(空wavで詰まるずれ対策)
         wav_path = clip["wav"]
         tl_start = clip["timeline_start"]
         fps = clip["fps"]
@@ -1040,19 +1416,45 @@ def _run_openai_whisper(model_size, language, device, clips, model_dir, output_p
                 del opts["language"]
             if prompt_text:
                 opts["initial_prompt"] = prompt_text
+            # v2.9.4: hallucination_silence_threshold は渡さない。
+            # v2.9.3 で試したが、本家の実装は is_segment_anomaly (単語確率/長さの異常) を
+            # 通ったものしか消さず、whisper の定型幻聴は高確信度なので引っかからない。
+            # 実機では幻聴が消えず「ご視聴ありがとうございました」→「それではまた」と
+            # 別の定型句に化けただけで、ついでに他の字幕の時刻が最大84msずれた。
+            # デコードには一切触れず、後段の _is_hallucination で決定的に落とす方式にする。
             result = model.transcribe(wav_path, **opts)
-            runs = _speech_runs(wav_path) if morph_split else []
+            # v2.9.3: 幻聴判定に VAD が常時必要。runs(スナップ用)は従来どおり
+            # morph_split のときだけ渡し、既存の配置挙動を一切変えない。
+            vad_runs = _speech_runs(wav_path)
+            runs = vad_runs if morph_split else []
             for seg in result.get("segments", []):
                 # v2.8: Segment quality filter
-                if seg.get("avg_logprob", 0) < -1.0:
+                # v2.9.5: 何を捨てたかを必ず記録する。ここが見えないと「字幕が減った」
+                # ときに幻聴が消えたのか本物が消えたのか切り分けられない。
+                # v2.9.8: しきい値を -1.0 から -3.0 に緩めた。
+                # 実測で正しい字幕が logprob=-1.029 / -1.218 / -1.273 で捨てられていた
+                # (「短い相づち」「固有名詞!」「固有名詞?」)。一方、本物のゴミは -5.865。
+                # whisper 本体は -1.0 を「フォールバックを試す合図」として使っているだけで、
+                # 「捨てる基準」ではない。温度を上げて得た結果は logprob が下がるのが当然で、
+                # 同じ値で切ると正解まで巻き添えになる。
+                if seg.get("avg_logprob", 0) < -3.0 or seg.get("no_speech_prob", 0) > 0.6:
                     filtered_count += 1
-                    continue
-                if seg.get("no_speech_prob", 0) > 0.6:
-                    filtered_count += 1
+                    with open(err_path, "a", encoding="utf-8") as ef:
+                        ef.write(f"Quality filtered: [{seg['start']:.2f}-{seg['end']:.2f}] "
+                                 f"logprob={seg.get('avg_logprob', 0):.3f} "
+                                 f"no_speech={seg.get('no_speech_prob', 0):.3f} "
+                                 f"temp={seg.get('temperature', 0)} "
+                                 f"{seg['text'].strip()[:40]}\n")
                     continue
                 sf = tl_start + int(seg["start"] * fps)
                 ef2 = tl_start + int(seg["end"] * fps)
                 text = seg["text"].strip()
+                # v2.9.3: 幻聴フレーズ除去 (無音区間に生える「ご視聴ありがとうございました」等)
+                if _is_hallucination(text, seg["start"], seg["end"], vad_runs):
+                    filtered_count += 1
+                    with open(err_path, "a", encoding="utf-8") as ef:
+                        ef.write(f"Hallucination dropped: [{seg['start']:.2f}-{seg['end']:.2f}] {text}\n")
+                    continue
                 wl = []
                 if morph_split:
                     wl = [(w.get("word", ""), w.get("start"), w.get("end")) for w in seg.get("words", [])]
@@ -1065,8 +1467,11 @@ def _run_openai_whisper(model_size, language, device, clips, model_dir, output_p
         for line in results:
             f.write(line + "\n")
     with open(err_path, "a", encoding="utf-8") as ef:
-        ef.write(f"Morph timing: word-aligned={morph_stats.get('word', 0)} proportional={morph_stats.get('prop', 0)} snap-moved={morph_stats.get('snap', 0)} vad={_vad_mode}\n")
-        ef.write(f"Done: {len(results)} segs, {filtered_count} filtered (openai-whisper, {device})\n")
+        ef.write(f"Morph timing: word-aligned={morph_stats.get('word', 0)} proportional={morph_stats.get('prop', 0)} snap-moved={morph_stats.get('snap', 0)} pause-split={morph_stats.get('pause', 0)} vad={_vad_mode}\n")
+        ef.write(f"Done: {len(results)} segs, {filtered_count} filtered (openai-whisper, {device})"
+                 f" hal_phrases={len(_HAL_PHRASES)}({_HAL_SRC})\n")
+        # v2.9.17: 内訳。モデルロードが支配的なのか転写なのかを毎回残す
+        ef.write(f"Timing(py): load={_tLoad - _t0:.1f}s transcribe={_time.time() - _tLoad:.1f}s\n")
 
 if __name__ == "__main__":
     main()
@@ -1286,10 +1691,7 @@ static void SaveSettings(){
             GetWindowTextW(g_promptEdit, &wBuf[0], len + 1);
             wBuf.resize(len);
             std::string pBuf = WideToUtf8(wBuf);
-            // Escape newlines for INI
-            std::string esc;
-            for(char c : pBuf){ if(c == '\n') esc += "\\n"; else if(c == '\r'){} else esc += c; }
-            f << "prompt=" << esc << "\n";
+            f << "prompt=" << IniEscape(pBuf) << "\n"; // v2.9.18
         } else {
             f << "prompt=\n";
         }
@@ -1304,7 +1706,7 @@ static void SaveSettings(){
             GetWindowTextW(g_hotwordsEdit, &wBuf[0], len + 1);
             wBuf.resize(len);
             std::string hBuf = WideToUtf8(wBuf);
-            f << "hotwords=" << hBuf << "\n";
+            f << "hotwords=" << IniEscape(hBuf) << "\n"; // v2.9.18: prompt と同じ扱いに揃える
         } else {
             f << "hotwords=\n";
         }
@@ -1346,19 +1748,13 @@ static void LoadSettings(){
         else if(key=="rep_penalty") SendMessageA(g_chkRepPenalty, BM_SETCHECK, atoi(val.c_str()) ? BST_CHECKED : BST_UNCHECKED, 0);
         else if(key=="vad") SendMessageA(g_chkVad, BM_SETCHECK, atoi(val.c_str()) ? BST_CHECKED : BST_UNCHECKED, 0); // v2.9.5
         else if(key=="prompt"){
-            // Unescape newlines from INI
-            std::string unesc;
-            for(size_t i = 0; i < val.size(); i++){
-                if(val[i] == '\\' && i+1 < val.size() && val[i+1] == 'n'){ unesc += '\n'; i++; }
-                else unesc += val[i];
-            }
             // v2.9.1【文字化け修正】iniはUTF-8で書かれているので、ANSI版で戻すと化ける。
             // UTF-16に変換してからWide版で設定する(Issue #5)
-            SetWindowTextW(g_promptEdit, Utf8ToWide(unesc).c_str());
+            SetWindowTextW(g_promptEdit, Utf8ToWide(IniUnescape(val)).c_str()); // v2.9.18
         }
         // v2.8 settings
         else if(key=="batched") SendMessageA(g_chkBatched, BM_SETCHECK, atoi(val.c_str()) ? BST_CHECKED : BST_UNCHECKED, 0);
-        else if(key=="hotwords") SetWindowTextW(g_hotwordsEdit, Utf8ToWide(val).c_str()); // v2.9.1【文字化け修正】
+        else if(key=="hotwords") SetWindowTextW(g_hotwordsEdit, Utf8ToWide(IniUnescape(val)).c_str()); // v2.9.1【文字化け修正】/ v2.9.18: エスケープ対応
     }
 }
 
@@ -1370,6 +1766,7 @@ static void LoadSettings(){
 static void SetStatus(const std::string& msg);
 static void SetProgress(int val);
 static void UpdateWhisperLocLabels();
+static void WriteTestLog(); // v2.9.6
 static void UpdateFugashiStatus(); // v2.8.5
 static void SetStatusW(const wchar_t* msg); // v2.8.10【I】: g_status/g_statusSetup同時更新版(定義はSetStatus/SetProgressの近く)
 static void ProbeThread(); // v2.9.10: SetupThread末尾から再実測のため呼ぶ(定義は後方)
@@ -1394,7 +1791,37 @@ static bool ModelExists(const std::string& mName){
     bool exists = FileExistsU(localModel + "\\config.json")   // faster-whisper
         || FileExistsU(localModel + "\\model.bin")              // faster-whisper alt
         || FileExistsU(mDir + "\\" + mName + ".pt");            // openai-whisper
-    // v2.8: distil/kotoba モデルの HuggingFace キャッシュ判定
+    // v2.9.24【K1】faster-whisper は HuggingFace のキャッシュ形式
+    // `models--<配布元>--<リポジトリ>` に落とすが、その形式を見る処理が下の kotoba 特例に
+    // しか無く、他のモデルは実際には入っているのに「未導入」と誤判定していた(利用者report)。
+    // 表示だけの問題ではない: CheckMissingForGenerate() 経由で**字幕生成がブロックされる**
+    // (入れ直しても未導入のまま = 無限ループ)。v2.9.2 は faster が既定なので影響が大きい。
+    // ★開発者環境では再現しない: openai-whisper も使っていると <名前>.pt があり
+    //   上の3番目のチェックが通ってしまうため。faster しか使わない環境だけが踏む。
+    // リポジトリ名は "faster-whisper-<モデル名>" のように末尾がモデル名になる規約なので
+    // `-<モデル名>` で終わるフォルダを探す。配布元が変わっても効く
+    // (large-v3-turbo は Systran → mobiuslabsgmbh へ移動した実績がある)。
+    // ★前方一致ではなく**後方一致**にすること。前方一致だと "large-v3" が
+    //   "...-large-v3-turbo" を誤って拾う。
+    if(!exists){
+        std::string tail = "-" + mName;
+        WIN32_FIND_DATAW fd;
+        std::wstring pat = Utf8ToWide(mDir) + L"\\models--*";
+        HANDLE h = FindFirstFileW(pat.c_str(), &fd);
+        if(h != INVALID_HANDLE_VALUE){
+            do{
+                if(!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) continue;
+                std::string nm = WideToUtf8(fd.cFileName);
+                if(nm.size() > tail.size()
+                   && nm.compare(nm.size() - tail.size(), tail.size(), tail) == 0){
+                    exists = true;
+                    break;
+                }
+            } while(FindNextFileW(h, &fd));
+            FindClose(h);
+        }
+    }
+    // kotoba はリポジトリ名が "kotoba-whisper-v2.0-faster" でモデル名で終わらないため個別に見る
     if(!exists && mName.find("kotoba") == 0){
         std::string hfCache = mDir + "\\models--kotoba-tech--kotoba-whisper-v2.0-faster";
         exists = FileExistsU(hfCache);
@@ -1422,6 +1849,12 @@ static void UpdateVadEnable(){
     // _run_openai_whisper 側は batched を一度も参照しない(grepで0件確認)。
     // VAD・繰返し抑制と同じく、効かないチェックを触れる状態で残さない。
     if(g_chkBatched) EnableWindow(g_chkBatched, isFaster);
+    // v2.9.11【監査①】ホットワードも faster-whisper 専用だった。
+    // _run_openai_whisper は hotwords を一度も参照しない(grepで0件確認)。
+    // 入力できるのに黙って無視される状態だったので、他の3つと同じ扱いに揃える。
+    // (openai-whisper には hotwords 相当のAPIが無い。initial_prompt で代用する案はあるが、
+    //  プロンプトをそのまま字幕として出力してしまう既知の失敗があるため採用しない)
+    if(g_hotwordsEdit) EnableWindow(g_hotwordsEdit, isFaster);
 }
 
 static void SetBusy(bool busy){
@@ -1461,10 +1894,23 @@ static std::string DownloadFFmpeg(){
     std::string dest = GetPluginDir() + "\\ffmpeg";
     std::string zip  = GetTempDir() + "\\ffmpeg_dl.zip";
     std::string url  = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip";
+    // v2.9.23【J2】実機で初回DLが非常に遅く70%で停止した。3点直す:
+    //  1. $ProgressPreference='SilentlyContinue' — PowerShell 5.1 の Invoke-WebRequest は
+    //     進捗バー描画のオーバーヘッドで大幅に遅くなる(既知の問題)
+    //  2. 失敗時に1回リトライ。その前に中断した zip を必ず消す(再開はできないので消して取り直す)
+    //  3. -TimeoutSec を明示して無限待ちを防ぐ
+    // 進捗表示は呼び出し元が zip のサイズをポーリングしているのでこの変更の影響を受けない。
     std::string ps = "powershell -NoProfile -ExecutionPolicy Bypass -Command \""
         "$ErrorActionPreference='Stop';"
+        "$ProgressPreference='SilentlyContinue';"
         "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;"
-        "Invoke-WebRequest -Uri '" + url + "' -OutFile '" + zip + "' -UseBasicParsing;"
+        "if(Test-Path '" + zip + "'){Remove-Item '" + zip + "' -Force};"
+        "$ok=$false;"
+        "for($i=1; $i -le 2 -and -not $ok; $i++){"
+        "  try{ Invoke-WebRequest -Uri '" + url + "' -OutFile '" + zip + "' -UseBasicParsing -TimeoutSec 600; $ok=$true }"
+        "  catch{ if(Test-Path '" + zip + "'){Remove-Item '" + zip + "' -Force}; Start-Sleep -Seconds 3 }"
+        "};"
+        "if(-not $ok){ throw 'ffmpeg download failed after 2 attempts' };"
         "Expand-Archive -Path '" + zip + "' -DestinationPath '" + dest + "' -Force;"
         "Remove-Item '" + zip + "' -Force\"";
     std::string out;
@@ -1595,7 +2041,7 @@ static void SetupThread(){
             "python.org\xe3\x81\x8b\xe3\x82\x89Python 3.10+\xe3\x82\x92\xe3\x82\xa4\xe3\x83\xb3\xe3\x82\xb9\xe3\x83\x88\xe3\x83\xbc\xe3\x83\xab\xe3\x81\x97\xe3\x81\xa6\xe3\x81\x8f\xe3\x81\xa0\xe3\x81\x95\xe3\x81\x84\xe3\x80\x82\n"
             "\xe3\x81\xbe\xe3\x81\x9f\xe3\x81\xaf\xe3\x80\x8cPython\xe9\x81\xb8\xe6\x8a\x9e\xe3\x80\x8d\xe3\x83\x9c\xe3\x82\xbf\xe3\x83\xb3\xe3\x81\xa7\xe6\x8c\x87\xe5\xae\x9a",
             "Python\xe3\x81\x8c\xe5\xbf\x85\xe8\xa6\x81", MB_OK|MB_ICONWARNING);
-        SetStatusW(L"Ready (v2.9.2)"); // v2.8.10【I】: SetWindowTextW直接呼びを置き換え(環境タブ凍結対策)+バージョン更新
+        SetStatusW(L"Ready (v2.9.25)"); // v2.8.10【I】: SetWindowTextW直接呼びを置き換え(環境タブ凍結対策)+バージョン更新
         SetProgress(0);
         ClearSetupChecks(); // v2.9.0【D】: 異常終了パスでもOFFに戻す
         SetBusy(false);
@@ -1621,7 +2067,7 @@ static void SetupThread(){
                 "\xe4\xbb\xa5\xe4\xb8\x8a\xe3\x82\x92\xe3\x82\xa4\xe3\x83\xb3\xe3\x82\xb9\xe3\x83\x88\xe3\x83\xbc\xe3\x83\xab\xe3\x81\x97\xe3\x80\x81\n"
                 "\xe3\x80\x8cPython\xe9\x81\xb8\xe6\x8a\x9e\xe3\x80\x8d\xe3\x83\x9c\xe3\x82\xbf\xe3\x83\xb3\xe3\x81\xa7\xe6\x8c\x87\xe5\xae\x9a\xe3\x81\x97\xe3\x81\xa6\xe3\x81\x8f\xe3\x81\xa0\xe3\x81\x95\xe3\x81\x84\xe3\x80\x82",
                 "Python\xe3\x81\x8c\xe4\xbd\xbf\xe7\x94\xa8\xe3\x81\xa7\xe3\x81\x8d\xe3\x81\xbe\xe3\x81\x9b\xe3\x82\x93", MB_OK|MB_ICONERROR);
-            SetStatusW(L"Ready (v2.9.2)");
+            SetStatusW(L"Ready (v2.9.25)");
             SetProgress(0);
             ClearSetupChecks();
             SetBusy(false);
@@ -1801,6 +2247,13 @@ static void SetupThread(){
         sf << "        whisper.load_model(mn, download_root=model_dir)\n";
         sf << "    else:\n";
         sf << "        from faster_whisper import WhisperModel\n";
+        // v2.9.23【J1】シンボリックリンク権限が無い環境ではDLが WinError 1314 で失敗する。
+        // セットアップ経路は「入れ直し」なのでコピー固定で構わない(確実性を優先)。
+        sf << "        try:\n";
+        sf << "            from huggingface_hub import file_download as _hfd\n";
+        sf << "            _hfd.are_symlinks_supported = lambda *a, **k: False\n";
+        sf << "        except Exception:\n";
+        sf << "            pass\n";
         sf << "        distil_map = {'kotoba-whisper': 'kotoba-tech/kotoba-whisper-v2.0-faster'}\n";
         sf << "        dl_name = distil_map.get(model_name, model_name)\n";
         sf << "        print(f'Downloading {dl_name} (faster-whisper) to {model_dir}')\n";
@@ -1843,7 +2296,7 @@ static void SetupThread(){
     MsgBox(g_wnd,
         "\xe5\x88\x9d\xe6\x9c\x9f\xe8\xa8\xad\xe5\xae\x9a\xe5\xae\x8c\xe4\xba\x86\n\n" + report,
         "\xe3\x82\xbb\xe3\x83\x83\xe3\x83\x88\xe3\x82\xa2\xe3\x83\x83\xe3\x83\x97", MB_OK|MB_ICONINFORMATION);
-    SetStatusW(L"Ready (v2.9.2)"); // v2.8.10【I】: SetupThread正常終了時にg_statusSetupが取り残され「fugashi確認中...」等で凍結していたバグの本丸修正+バージョン更新
+    SetStatusW(L"Ready (v2.9.25)"); // v2.8.10【I】: SetupThread正常終了時にg_statusSetupが取り残され「fugashi確認中...」等で凍結していたバグの本丸修正+バージョン更新
     SetProgress(0);
     UpdateWhisperLocLabels();
     // v2.9.10【重要】セットアップ直後に probe を実測し直す。
@@ -2262,6 +2715,13 @@ static std::string ExtractAudio(const TimelineClip& clip, int fps, const std::st
     bool ok = RunProcess(cmdStr, procOut, 120000);
     if(!ok){
         DebugLog("ffmpeg fail: " + procOut);
+        // v2.9.15【監査④】音声トラックが無いだけの動画を「ffmpegの不具合」と誤診させない。
+        // 実測: 映像のみのmp4に対し ffmpeg は終了コード -22 と
+        // "Output file does not contain any stream" を返す。
+        // これを拾って呼び出し側に伝え、専用のメッセージを出す。
+        if(procOut.find("does not contain any stream") != std::string::npos
+           || procOut.find("Output file is empty") != std::string::npos)
+            g_extractNoAudio++;
         return "";
     }
     if(!FileExistsU(out)) return "";
@@ -2400,7 +2860,10 @@ static bool RunFasterWhisper(int mi, int di, int bi, int beamSize, int li, float
         for(auto& w : wavs) if(!w.empty()) DeleteFileU(w);
     };
 
+    // v2.9.17: フェーズ別の所要時間。どこに時間を使っているかが見えないと最適化を外す。
+    ULONGLONG _tExtract0 = GetTickCount64();
     // Extract audio for all clips
+    g_extractNoAudio = 0; // v2.9.15: 「音声トラックが無い」クリップ数を数え直す
     for(size_t ci = 0; ci < g_tlClips.size(); ci++){
         std::string w = tmp + "whisper_fw_" + std::to_string(ci) + ".wav";
         wavs.push_back(ExtractAudio(g_tlClips[ci], g_projectRate, w));
@@ -2408,8 +2871,12 @@ static bool RunFasterWhisper(int mi, int di, int bi, int beamSize, int li, float
     bool anyW = false;
     for(auto& w : wavs) if(!w.empty()) anyW = true;
     if(!anyW){
+        // v2.9.15【監査④】原因で文言を分ける。音声が無いだけなのに ffmpeg を疑わせない。
         MsgBox(g_wnd,
-            "\xe9\x9f\xb3\xe5\xa3\xb0\xe6\x8a\xbd\xe5\x87\xba\xe5\xa4\xb1\xe6\x95\x97\xe3\x80\x82" "ffmpeg\xe3\x82\x92\xe7\xa2\xba\xe8\xaa\x8d\xe3\x81\x97\xe3\x81\xa6\xe3\x81\x8f\xe3\x81\xa0\xe3\x81\x95\xe3\x81\x84\xe3\x80\x82",
+            (g_extractNoAudio > 0)
+              ? "\xe9\x81\xb8\xe6\x8a\x9e\xe3\x81\x97\xe3\x81\x9f\xe3\x82\xaf\xe3\x83\xaa\xe3\x83\x83\xe3\x83\x97\xe3\x81\xab\xe9\x9f\xb3\xe5\xa3\xb0\xe3\x81\x8c\xe5\x90\xab\xe3\x81\xbe\xe3\x82\x8c\xe3\x81\xa6\xe3\x81\x84\xe3\x81\xbe\xe3\x81\x9b\xe3\x82\x93\xe3\x80\x82\n"
+                "\xe9\x9f\xb3\xe5\xa3\xb0\xe3\x83\x88\xe3\x83\xa9\xe3\x83\x83\xe3\x82\xaf\xe3\x81\xae\xe3\x81\x82\xe3\x82\x8b\xe5\x8b\x95\xe7\x94\xbb\xe3\x81\x8b\xe3\x80\x81\xe9\x9f\xb3\xe5\xa3\xb0\xe3\x83\x95\xe3\x82\xa1\xe3\x82\xa4\xe3\x83\xab\xe3\x82\x92\xe9\x85\x8d\xe7\xbd\xae\xe3\x81\x97\xe3\x81\xa6\xe3\x81\x8f\xe3\x81\xa0\xe3\x81\x95\xe3\x81\x84\xe3\x80\x82"
+              : "\xe9\x9f\xb3\xe5\xa3\xb0\xe6\x8a\xbd\xe5\x87\xba\xe5\xa4\xb1\xe6\x95\x97\xe3\x80\x82\x66\x66\x6d\x70\x65\x67\xe3\x82\x92\xe7\xa2\xba\xe8\xaa\x8d\xe3\x81\x97\xe3\x81\xa6\xe3\x81\x8f\xe3\x81\xa0\xe3\x81\x95\xe3\x81\x84\xe3\x80\x82",
             "Error", MB_OK|MB_ICONERROR);
         cleanup();
         return false;
@@ -2417,26 +2884,17 @@ static bool RunFasterWhisper(int mi, int di, int bi, int beamSize, int li, float
 
     std::string md = GetModelsDir();
 
+    ULONGLONG _tExtract1 = GetTickCount64();
     // Write batch JSON
     {
         std::ofstream bf(Utf8ToWide(bp));
         char tempStr[32]; sprintf_s(tempStr, "%.2f", temp);
         bf << "{\n  \"model\": \"" << mn[mi] << "\",\n  \"language\": \"" << lc[li] << "\",\n  \"device\": \"" << dn[di] << "\",\n  \"backend\": \"" << bn[bi] << "\",\n  \"beam_size\": " << beamSize << ",\n  \"temperature\": " << tempStr << ",\n  \"no_prev_text\": " << (noPrevText ? "true" : "false") << ",\n  \"word_timestamps\": " << (wordTs ? "true" : "false") << ",\n  \"rep_penalty\": " << (repPenalty ? "true" : "false") << ",\n  \"vad_filter\": " << (vadFilter ? "true" : "false") << ",\n  \"prompt\": \"";
         // JSON-escape prompt text
-        for(char c : promptText){
-            if(c == '"') bf << "\\\"";
-            else if(c == '\\') bf << "\\\\";
-            else if(c == '\n') bf << "\\n";
-            else if(c == '\r'){}
-            else bf << c;
-        }
+        bf << JsonEscape(promptText); // v2.9.16
         bf << "\",\n  \"hotwords\": \"";
         // JSON-escape hotwords text
-        for(char c : hotwordsText){
-            if(c == '"') bf << "\\\"";
-            else if(c == '\\') bf << "\\\\";
-            else bf << c;
-        }
+        bf << JsonEscape(hotwordsText); // v2.9.16
         bf << "\",\n  \"batched\": " << (batched ? "true" : "false");
         {   // v2.8.2: 形態素分割ON/OFF と 文字数上限 を Python へ渡す
             int morphOn = (SendMessageA(g_chkMorphSplit, BM_GETCHECK, 0, 0) == BST_CHECKED) ? 1 : 0;
@@ -2474,7 +2932,7 @@ static bool RunFasterWhisper(int mi, int di, int bi, int beamSize, int li, float
         {
             std::string ffm = GetEffectiveFFmpeg();
             std::string fesc;
-            for(char c : ffm){ if(c == '\\') fesc += "\\\\"; else if(c == '"') fesc += "\\\""; else fesc += c; }
+            fesc = JsonEscape(ffm); // v2.9.16
             bf << ",\n  \"ffmpeg\": \"" << fesc << "\"";
         }
         bf << ",\n  \"clips\": [\n";
@@ -2483,8 +2941,12 @@ static bool RunFasterWhisper(int mi, int di, int bi, int beamSize, int li, float
             if(wavs[ci].empty()) continue;
             if(!first) bf << ",\n"; first = false;
             std::string esc;
-            for(char c : wavs[ci]){ if(c == '\\') esc += "\\\\"; else if(c == '"') esc += "\\\""; else esc += c; }
-            bf << "    {\"wav\": \"" << esc << "\", \"timeline_start\": " << g_tlClips[ci].timelineStart
+            esc = JsonEscape(wavs[ci]); // v2.9.16
+            // v2.9.20【F1】元の g_tlClips 上の index を明示する。空wavのクリップを詰めて書くため、
+            // Python 側 enumerate の ci は「詰めた後」の index になり、それを C++ が元の配列
+            // g_tlClips[ci] に当ててクランプしていた。音声の無いクリップの後ろに本編があると
+            // 別クリップの範囲でクランプされ、範囲外の字幕が黙って全滅する(再現ハーネスで 0/2 件を確認)。
+            bf << "    {\"idx\": " << ci << ", \"wav\": \"" << esc << "\", \"timeline_start\": " << g_tlClips[ci].timelineStart
                << ", \"timeline_end\": " << g_tlClips[ci].timelineEnd << ", \"fps\": " << g_projectRate << "}";
         }
         bf << "\n  ]\n}\n";
@@ -2504,7 +2966,26 @@ static bool RunFasterWhisper(int mi, int di, int bi, int beamSize, int li, float
     // Run Python with pipes
     std::wstring wCmd = Utf8ToWide("\"" + python + "\" \"" + ps + "\" \"" + bp + "\" \"" + op + "\"");
     std::string pyOut;
-    bool pyOk = RunProcess(wCmd, pyOut, 600000);
+    // v2.9.14【監査③】固定600秒では長尺やCPU実行で足りず、途中で強制終了して全部失う。
+    // 実測: ffmpeg抽出は1284倍速なので抽出は問題ないが、推論はGPUのRTF 0.04に対し
+    // CPUは1.0前後。30分動画をCPUで回すと1800秒かかり10分の上限を大きく超える。
+    // 音声長の2倍 + 5分を目安にし、無限待ちを避けるため上限1時間で頭打ちにする。
+    double totalSec = 0.0;
+    for(size_t ti = 0; ti < g_tlClips.size(); ti++)
+        totalSec += (double)(g_tlClips[ti].timelineEnd - g_tlClips[ti].timelineStart)
+                    / (double)(g_projectRate > 0 ? g_projectRate : 30);
+    double tmoD = totalSec * 2000.0 + 300000.0;
+    if(tmoD < 600000.0) tmoD = 600000.0;
+    if(tmoD > 3600000.0) tmoD = 3600000.0;
+    DWORD tmo = (DWORD)tmoD;
+    DebugLog("Transcribe timeout: " + std::to_string(tmo / 1000) + "s (audio "
+             + std::to_string((int)totalSec) + "s)");
+    ULONGLONG _tPy0 = GetTickCount64();
+    bool pyOk = RunProcess(wCmd, pyOut, tmo);
+    ULONGLONG _tPy1 = GetTickCount64();
+    DebugLog("Timing: extract=" + std::to_string(_tExtract1 - _tExtract0) + "ms"
+             + " python=" + std::to_string(_tPy1 - _tPy0) + "ms"
+             + " (json=" + std::to_string(_tPy0 - _tExtract1) + "ms)");
     DebugLog("Python exit=" + std::string(pyOk ? "0" : "nonzero") + "\n" + pyOut);
 
     // Read .err file
@@ -2663,7 +3144,7 @@ static bool RunFasterWhisper(int mi, int di, int bi, int beamSize, int li, float
 static void TranscribeThread(){
     SetBusy(true); SetProgress(0);
     DWORD startTick = GetTickCount();
-    {std::ofstream f(Utf8ToWide(GetPluginDir() + "\\whisper_debug.log"), std::ios::trunc); f << "=== Whisper Subtitle v2.9.2 ===\n";}
+    {std::ofstream f(Utf8ToWide(GetPluginDir() + "\\whisper_debug.log"), std::ios::trunc); f << "=== Whisper Subtitle v2.9.25 ===\n";}
     SaveSettings();
     char lt[16] = {}; GetWindowTextA(g_layerEdit, lt, sizeof(lt));
     int uiL = atoi(lt); if(uiL < 2 || uiL > 100) uiL = 2;
@@ -2699,9 +3180,11 @@ static void TranscribeThread(){
     int di = SendMessageA(g_deviceCombo, CB_GETCURSEL, 0, 0);
     int bi = SendMessageA(g_backendCombo, CB_GETCURSEL, 0, 0);
     char qBuf[16] = {}; GetWindowTextA(g_qualityEdit, qBuf, sizeof(qBuf));
-    int beamSize = atoi(qBuf); if(beamSize <= 0) beamSize = 5;
+    // v2.9.14【監査③】上限が無く、誤って大きな値を入れると事実上ハングしていた
+    int beamSize = atoi(qBuf); if(beamSize <= 0) beamSize = 5; if(beamSize > 20) beamSize = 20;
     char tBuf2[16] = {}; GetWindowTextA(g_tempEdit, tBuf2, sizeof(tBuf2));
-    float temp = (float)atof(tBuf2); if(temp < 0) temp = 0;
+    // v2.9.14【監査③】whisper の想定は 0〜1。範囲外は丸める
+    float temp = (float)atof(tBuf2); if(temp < 0) temp = 0; if(temp > 1.0f) temp = 1.0f;
     int li = SendMessageA(g_langCombo, CB_GETCURSEL, 0, 0);
     if(mi == CB_ERR) mi = 0; if(di == CB_ERR) di = 0;
     if(bi == CB_ERR) bi = 0; if(li == CB_ERR) li = 1;
@@ -2747,7 +3230,7 @@ static void TranscribeThread(){
             "ffmpeg.exe\xe3\x81\x8c\xe8\xa6\x8b\xe3\x81\xa4\xe3\x81\x8b\xe3\x82\x8a\xe3\x81\xbe\xe3\x81\x9b\xe3\x82\x93\xe3\x80\x82\n\n"
             "\xe3\x80\x8c" "ffmpeg\xe9\x81\xb8\xe6\x8a\x9e\xe3\x80\x8d\xe3\x83\x9c\xe3\x82\xbf\xe3\x83\xb3\xe3\x81\xa7\xe6\x8c\x87\xe5\xae\x9a\xe3\x81\x97\xe3\x81\xa6\xe3\x81\x8f\xe3\x81\xa0\xe3\x81\x95\xe3\x81\x84",
             "Error", MB_OK|MB_ICONERROR);
-        SetStatus("Ready (v2.9.2)"); SetProgress(0); SetBusy(false); return;
+        SetStatus("Ready (v2.9.25)"); SetProgress(0); SetBusy(false); return;
     }
     std::string python = GetEffectivePython();
     if(python.empty()){
@@ -2755,7 +3238,7 @@ static void TranscribeThread(){
             "Python\xe3\x81\x8c\xe8\xa6\x8b\xe3\x81\xa4\xe3\x81\x8b\xe3\x82\x8a\xe3\x81\xbe\xe3\x81\x9b\xe3\x82\x93\xe3\x80\x82\n\n"
             "\xe3\x80\x8c\xe5\x88\x9d\xe6\x9c\x9f\xe8\xa8\xad\xe5\xae\x9a\xe3\x80\x8d\xe3\x81\xa7\xe3\x82\xbb\xe3\x83\x83\xe3\x83\x88\xe3\x82\xa2\xe3\x83\x83\xe3\x83\x97\xe3\x81\x97\xe3\x81\xa6\xe3\x81\x8f\xe3\x81\xa0\xe3\x81\x95\xe3\x81\x84",
             "Error", MB_OK|MB_ICONERROR);
-        SetStatus("Ready (v2.9.2)"); SetProgress(0); SetBusy(false); return;
+        SetStatus("Ready (v2.9.25)"); SetProgress(0); SetBusy(false); return;
     }
 
     SetStatus("\xe3\x82\xbf\xe3\x82\xa4\xe3\x83\xa0\xe3\x83\xa9\xe3\x82\xa4\xe3\x83\xb3\xe3\x82\xb9\xe3\x82\xad\xe3\x83\xa3\xe3\x83\xb3\xe4\xb8\xad...");
@@ -2767,19 +3250,58 @@ static void TranscribeThread(){
     sp.rate = 30;
     sp.maxLayer = 0;
     if(g_edit) g_edit->call_edit_section_param(&sp, ScanCallback);
-    g_projectRate = sp.rate;
+    // v2.9.14【監査③】es->info->rate を無検証で代入していた。0 が入ると
+    // seg.s / g_projectRate でゼロ除算(AviUtl2ごとクラッシュ)し、JSON にも "fps": 0 が渡って
+    // Python 側で全字幕がフレーム0に潰れる。異常値は既定の30に落とす。
+    g_projectRate = (sp.rate > 0 && sp.rate <= 1000) ? sp.rate : 30;
+    if(sp.rate <= 0 || sp.rate > 1000)
+        DebugLog("WARN: invalid project rate " + std::to_string(sp.rate) + " -> using 30");
     if(g_tlClips.empty()){
         MsgBox(g_wnd,
             "\xe5\x8b\x95\xe7\x94\xbb/\xe9\x9f\xb3\xe5\xa3\xb0\xe3\x82\xaf\xe3\x83\xaa\xe3\x83\x83\xe3\x83\x97\xe3\x81\x8c\xe8\xa6\x8b\xe3\x81\xa4\xe3\x81\x8b\xe3\x82\x8a\xe3\x81\xbe\xe3\x81\x9b\xe3\x82\x93\xe3\x80\x82\n"
             "\xe3\x82\xbf\xe3\x82\xa4\xe3\x83\xa0\xe3\x83\xa9\xe3\x82\xa4\xe3\x83\xb3\xe3\x81\xab\xe5\x8b\x95\xe7\x94\xbb/\xe9\x9f\xb3\xe5\xa3\xb0\xe3\x82\x92\xe9\x85\x8d\xe7\xbd\xae\xe3\x81\x97\xe3\x81\xa6\xe3\x81\x8f\xe3\x81\xa0\xe3\x81\x95\xe3\x81\x84",
             "Error", MB_OK|MB_ICONERROR);
-        SetStatus("Ready (v2.9.2)"); SetProgress(0); SetBusy(false); return;
+        SetStatus("Ready (v2.9.25)"); SetProgress(0); SetBusy(false); return;
+    }
+    // v2.9.20【F2/防御】同一 (ファイル, 区間, 再生位置) のクリップを1つに畳む。
+    // ScanCallback は全レイヤーを走査するため、同じ動画をエフェクト用に複数レイヤーへ
+    // 複製する編集では同一音声を複数回転写し、字幕オブジェクトが二重に積まれる。
+    // 完全一致のみ畳むので誤爆はない(同一音声を2回転写して欲しい場面は存在しない)。
+    {
+        std::vector<TimelineClip> uniq;
+        int dupDropped = 0;
+        for(const auto& c : g_tlClips){
+            bool dup = false;
+            for(const auto& u : uniq){
+                if(u.filePath == c.filePath && u.timelineStart == c.timelineStart
+                   && u.timelineEnd == c.timelineEnd && u.sourceOffset == c.sourceOffset){ dup = true; break; }
+            }
+            if(dup){ dupDropped++; continue; }
+            uniq.push_back(c);
+        }
+        if(dupDropped > 0){
+            DebugLog("Clips dedup: removed " + std::to_string(dupDropped) + " duplicate clip(s)");
+            g_tlClips = uniq;
+        }
     }
     DebugLog("Clips: " + std::to_string(g_tlClips.size()) + " Rate: " + std::to_string(g_projectRate));
+    // v2.9.6: beam/device/VAD 等はこれまでログに残っておらず、実行間の比較ができなかった
+    DebugLog(std::string("========== SETTINGS2: beam=") + std::to_string(beamSize)
+        + " temp=" + tBuf2
+        + " lang=" + std::to_string(li)
+        + " device=" + std::to_string(di)
+        + " vad=" + (vadFilter ? "1" : "0")
+        + " no_prev_text=" + (noPrevText ? "1" : "0")
+        + " word_ts=" + (wordTs ? "1" : "0")
+        + " rep_penalty=" + (repPenalty ? "1" : "0")
+        + " batched=" + (batched ? "1" : "0")
+        + " prompt=" + (promptText.empty() ? std::string("-") : promptText)
+        + " hotwords=" + (hotwordsText.empty() ? std::string("-") : hotwordsText)
+        + " ==========");
     SetProgress(20);
 
     if(!RunFasterWhisper(mi, di, bi, beamSize, li, temp, noPrevText, wordTs, repPenalty, promptText, hotwordsText, batched, vadFilter)){
-        SetStatus("Ready (v2.9.2)"); SetProgress(0); SetBusy(false); return;
+        SetStatus("Ready (v2.9.25)"); SetProgress(0); SetBusy(false); return;
     }
 
     if(g_segs.empty()){
@@ -2787,7 +3309,7 @@ static void TranscribeThread(){
             "\xe6\x96\x87\xe5\xad\x97\xe8\xb5\xb7\xe3\x81\x93\xe3\x81\x97\xe7\xb5\x90\xe6\x9e\x9c\xe3\x81\x8c\xe7\xa9\xba\xe3\x81\xa7\xe3\x81\x99\xe3\x80\x82\n"
             "\xe9\x9f\xb3\xe5\xa3\xb0\xe3\x83\x95\xe3\x82\xa1\xe3\x82\xa4\xe3\x83\xab\xe3\x82\x92\xe7\xa2\xba\xe8\xaa\x8d\xe3\x81\x97\xe3\x81\xa6\xe3\x81\x8f\xe3\x81\xa0\xe3\x81\x95\xe3\x81\x84\xe3\x80\x82",
             "\xe7\xb5\x90\xe6\x9e\x9c", MB_OK|MB_ICONWARNING);
-        SetStatus("Ready (v2.9.2)"); SetProgress(0); SetBusy(false); return;
+        SetStatus("Ready (v2.9.25)"); SetProgress(0); SetBusy(false); return;
     }
 
     // Create subtitle objects
@@ -3030,11 +3552,16 @@ static void TranscribeThread(){
 
     // Shift targetLayer until we find a clear range (max 50 layers)
     int maxShift = 50;
+    bool layerClear = false;
     for(int shift = 0; shift < maxShift; shift++){
-        if(!findFreeLayer()) break;
+        if(!findFreeLayer()){ layerClear = true; break; }
         DebugLog("Layer " + std::to_string(targetLayer + 1) + " occupied, shifting...");
         targetLayer++;
     }
+    // v2.9.21【H1】50回シフトしても空きが見つからないまま配置へ進んでいた。
+    // その状態では create_object が既存オブジェクトと重なって失敗する。記録を残す。
+    if(!layerClear)
+        DebugLog("WARN: no free layer range after " + std::to_string(maxShift) + " shifts; some subtitles may fail to place");
     DebugLog("Target layer: " + std::to_string(targetLayer + 1) + " (API " + std::to_string(targetLayer) + ")");
 
     // === PASS 1: Place ALL with create_object (100% reliable) ===
@@ -3044,13 +3571,19 @@ static void TranscribeThread(){
         int targetLayer;
         int placed;
         int failed;
+        std::vector<char>* ok; // v2.9.21【H1】item ごとの配置成否
     };
+    // v2.9.21【H1】Pass1 は成否をカウントしか持っておらず、Pass2 が「自分が置いた物か」を
+    // 判別できなかった。create_object は既存オブジェクトと重なると失敗する(SDK仕様)ため、
+    // 失敗した位置には利用者の既存オブジェクトが居る。そこを Pass2 が無条件に delete していた。
+    std::vector<char> p1ok(finalItems.size(), 0);
     Pass1Param p1;
     p1.items = &finalItems;
     p1.layers = &itemLayers;
     p1.targetLayer = targetLayer;
     p1.placed = 0;
     p1.failed = 0;
+    p1.ok = &p1ok;
 
     auto pass1Callback = [](void* param, EDIT_SECTION* es){
         Pass1Param* p = (Pass1Param*)param;
@@ -3072,6 +3605,7 @@ static void TranscribeThread(){
                     "\xe4\xb8\xad\xe5\xa4\xae\xe6\x8f\x83\xe3\x81\x88[\xe4\xb8\x8b]");
                 es->set_object_item_value(obj, wD, L"Y", "400.00");
                 p->placed++;
+                (*p->ok)[idx] = 1; // v2.9.21【H1】この item は自分が置いた
             } else {
                 p->failed++;
             }
@@ -3092,6 +3626,7 @@ static void TranscribeThread(){
             int replaced;
             int rFailed;
             std::string logPath;
+            std::vector<char>* ok; // v2.9.21【H1】Pass1 が置けた item だけを触るため
         };
         Pass2Param p2;
         p2.items = &finalItems;
@@ -3100,6 +3635,7 @@ static void TranscribeThread(){
         p2.tplContent = g_templateContent;
         p2.replaced = 0;
         p2.rFailed = 0;
+        p2.ok = &p1ok;
         p2.logPath = GetPluginDir() + "\\whisper_debug.log";
 
         auto pass2Callback = [](void* param, EDIT_SECTION* es){
@@ -3116,8 +3652,11 @@ static void TranscribeThread(){
                 }
             };
 
-            // Step A: Delete ALL objects (make timeline completely empty)
+            // Step A: Pass1 が置けた item のオブジェクトだけを削除する
+            // v2.9.21【H1】以前は全 item について find_object したものを無条件に delete していた。
+            // Pass1 が失敗した位置に居るのは利用者の既存オブジェクトなので、それを消していた。
             for(size_t idx = 0; idx < p->items->size(); idx++){
+                if(!(*p->ok)[idx]) continue; // 自分が置いていない = 触らない
                 auto& item = (*p->items)[idx];
                 int apiLayer = p->targetLayer + (*p->layers)[idx];
                 OBJECT_HANDLE existing = es->find_object(apiLayer, item.s);
@@ -3128,8 +3667,11 @@ static void TranscribeThread(){
                 }
             }
 
-            // Step B: Recreate ALL with template (timeline is empty, no collisions)
+            // Step B: Step A で消した分だけを、テンプレートで作り直す
+            // v2.9.21【H1】Pass1 が置けなかった item をここで作ると、利用者の既存オブジェクトと
+            // 重なる位置に割り込むことになるので触らない(挙動は従来の「配置できず」と同じ)。
             for(size_t idx = 0; idx < p->items->size(); idx++){
+                if(!(*p->ok)[idx]) continue; // Step A と対で揃える
                 auto& item = (*p->items)[idx];
                 int apiLayer = p->targetLayer + (*p->layers)[idx];
                 int len = item.e - item.s; if(len <= 0) len = 1;
@@ -3179,8 +3721,12 @@ static void TranscribeThread(){
     else sprintf_s(timeBuf, " %ds", (int)elapsed);
     std::string warn; // v2.8.5
     if(fugashiMissing) warn = "  \xe2\x9a\xa0 fugashi\xe6\x9c\xaa\xe5\xb0\x8e\xe5\x85\xa5\xe3\x81\xae\xe3\x81\x9f\xe3\x82\x81\xe6\x96\x87\xe7\xaf\x80\xe5\x8c\xba\xe5\x88\x87\xe3\x82\x8a\xe3\x81\x8c\xe8\xa1\x8c\xe3\x82\x8f\xe3\x82\x8c\xe3\x81\xbe\xe3\x81\x9b\xe3\x82\x93\xe3\x81\xa7\xe3\x81\x97\xe3\x81\x9f"; // v2.8.9: F「プロ分割」→「文節区切り」用語統一
+    // v2.9.21【H1】配置失敗は従来 debug ログにしか出ず、利用者は字幕が減ったことに気づけなかった
+    if(p1.failed > 0)
+        warn += "  \xe2\x9a\xa0 " + std::to_string(p1.failed) + "\xe5\x80\x8b\xe3\x81\xaf\xe6\x97\xa2\xe5\xad\x98\xe3\x82\xaa\xe3\x83\x96\xe3\x82\xb8\xe3\x82\xa7\xe3\x82\xaf\xe3\x83\x88\xe3\x81\xa8\xe9\x87\x8d\xe3\x81\xaa\xe3\x82\x8a\xe9\x85\x8d\xe7\xbd\xae\xe3\x81\xa7\xe3\x81\x8d\xe3\x81\xbe\xe3\x81\x9b\xe3\x82\x93";
     SetStatus("Done! " + std::to_string(placed) + "\xe5\x80\x8b\xe3\x81\xae\xe5\xad\x97\xe5\xb9\x95\xe3\x82\x92\xe9\x85\x8d\xe7\xbd\xae (" + std::to_string(layerEnds.size()) + "Layer)" + timeBuf + warn);
     DebugLog("Placed: " + std::to_string(placed));
+    WriteTestLog(); // v2.9.6: 設定+結果+SRT をデスクトップへ自動保存
     SetBusy(false);
 }
 
@@ -3188,7 +3734,57 @@ static void TranscribeThread(){
 // SRT Export
 // =========================================================================
 
+// v2.9.6: SRT本文の組み立て。手動エクスポートと自動テストログで同じ処理を使う。
+// 以前は ExportSRT の中にべた書きされていたため、片方だけ直すと食い違う恐れがあった。
+static std::string BuildSrtText(){
+    char lingerBuf[16] = {}; GetWindowTextA(g_lingerEdit, lingerBuf, sizeof(lingerBuf));
+    double lingerSec = atof(lingerBuf);
+    if(lingerSec < 0) lingerSec = 0;
+    if(lingerSec > 10) lingerSec = 10;
+    int lingerFrames = (int)(lingerSec * g_projectRate);
+
+    struct SrtSeg { int s, e; std::string text; };
+    std::vector<SrtSeg> srtSegs;
+    for(auto& seg : g_segs) srtSegs.push_back({seg.s, seg.e, seg.text});
+    if(lingerFrames > 0){
+        for(auto& s2 : srtSegs) s2.e += lingerFrames;
+    }
+    char leadBuf2b[16] = {}; GetWindowTextA(g_leadEdit, leadBuf2b, sizeof(leadBuf2b));
+    double leadSec2 = atof(leadBuf2b);
+    if(leadSec2 < 0) leadSec2 = 0;
+    if(leadSec2 > 5) leadSec2 = 5;
+    int leadFrames2 = (int)(leadSec2 * g_projectRate);
+    if(leadFrames2 > 0){
+        for(auto& s2 : srtSegs){
+            s2.s -= leadFrames2;
+            if(s2.s < 0) s2.s = 0;
+        }
+    }
+    for(size_t i = 1; i < srtSegs.size(); i++){
+        if(srtSegs[i].s < srtSegs[i-1].e)
+            srtSegs[i-1].e = srtSegs[i].s;
+    }
+    std::string out;
+    int idx = 1;
+    for(auto& seg : srtSegs){
+        double ss = (double)seg.s / g_projectRate, se = (double)seg.e / g_projectRate;
+        int sh = (int)(ss/3600), sm = (int)(fmod(ss,3600)/60), ssc = (int)fmod(ss,60), sms = (int)(fmod(ss,1)*1000);
+        int eh = (int)(se/3600), em = (int)(fmod(se,3600)/60), esc2 = (int)fmod(se,60), ems = (int)(fmod(se,1)*1000);
+        char buf[160];
+        sprintf_s(buf, "%d\n%02d:%02d:%02d,%03d --> %02d:%02d:%02d,%03d\n",
+                  idx++, sh,sm,ssc,sms, eh,em,esc2,ems);
+        out += buf; out += seg.text; out += "\n\n";
+    }
+    return out;
+}
+
 static void ExportSRT(){
+    // v2.9.11【監査①】生成中は g_segs を TranscribeThread が書き換えている最中なので触らない。
+    // このボタンはハンドルを保持しておらず EnableWindow で止められないため関数側で弾く。
+    if(g_busy.load()){
+        MsgBox(g_wnd, "\xe5\xad\x97\xe5\xb9\x95\xe7\x94\x9f\xe6\x88\x90\xe4\xb8\xad\xe3\x81\xa7\xe3\x81\x99\xe3\x80\x82\xe5\xae\x8c\xe4\xba\x86\xe3\x81\x97\xe3\x81\xa6\xe3\x81\x8b\xe3\x82\x89\xe5\xae\x9f\xe8\xa1\x8c\xe3\x81\x97\xe3\x81\xa6\xe3\x81\x8f\xe3\x81\xa0\xe3\x81\x95\xe3\x81\x84", "SRT Export", MB_OK|MB_ICONINFORMATION);
+        return;
+    }
     if(g_segs.empty()){
         MsgBox(g_wnd, "\xe5\xad\x97\xe5\xb9\x95\xe3\x83\x87\xe3\x83\xbc\xe3\x82\xbf\xe3\x81\x8c\xe3\x81\x82\xe3\x82\x8a\xe3\x81\xbe\xe3\x81\x9b\xe3\x82\x93", "SRT Export", MB_OK|MB_ICONWARNING);
         return;
@@ -3201,50 +3797,83 @@ static void ExportSRT(){
     ofn.Flags = OFN_OVERWRITEPROMPT;
     ofn.lpstrDefExt = L"srt";
     if(!GetSaveFileNameW(&ofn)) return;
+    std::ofstream f(fn, std::ios::binary);
+    f << BuildSrtText();
+    MsgBox(g_wnd, "SRT\xe3\x82\xa8\xe3\x82\xaf\xe3\x82\xb9\xe3\x83\x9d\xe3\x83\xbc\xe3\x83\x88\xe5\xae\x8c\xe4\xba\x86", "SRT", MB_OK|MB_ICONINFORMATION);
+}
 
-    // Apply linger to SRT (same as timeline placement)
-    char lingerBuf[16] = {}; GetWindowTextA(g_lingerEdit, lingerBuf, sizeof(lingerBuf));
-    double lingerSec = atof(lingerBuf);
-    if(lingerSec < 0) lingerSec = 0;
-    if(lingerSec > 10) lingerSec = 10;
-    int lingerFrames = (int)(lingerSec * g_projectRate);
-
-    struct SrtSeg { int s, e; std::string text; };
-    std::vector<SrtSeg> srtSegs;
-    for(auto& seg : g_segs) srtSegs.push_back({seg.s, seg.e, seg.text});
-    // Extend
-    if(lingerFrames > 0){
-        for(auto& s : srtSegs) s.e += lingerFrames;
-    }
-    // v2.8.2a: Apply lead time to SRT (same as timeline placement)
-    char leadBuf2b[16] = {}; GetWindowTextA(g_leadEdit, leadBuf2b, sizeof(leadBuf2b));
-    double leadSec2 = atof(leadBuf2b);
-    if(leadSec2 < 0) leadSec2 = 0;
-    if(leadSec2 > 5) leadSec2 = 5;
-    int leadFrames2 = (int)(leadSec2 * g_projectRate);
-    if(leadFrames2 > 0){
-        for(auto& s : srtSegs){
-            s.s -= leadFrames2;
-            if(s.s < 0) s.s = 0;
+// v2.9.6: 字幕生成が終わるたびに、設定と結果をデスクトップへ自動保存する。
+// 毎回手で SRT エクスポートしなくても実行間の比較ができるようにするためのもの。
+//   出力先  : デスクトップ\SRT テストログ\<日時>_<backend>_beam<N>.txt
+//   中身    : 設定 / 実行情報(落とした字幕を含む) / SRT本文
+// 設定は whisper_debug.log から抜き出す。UIから読み直すと二重管理になるうえ、
+// 「実際にその実行で使われた値」とズレる危険があるため。
+// 失敗しても字幕生成そのものには影響させない (握りつぶす)。
+static void WriteTestLog(){
+    if(g_segs.empty()) return;
+    // v2.9.8: 出力先は whisper_subtitle\testlog_dir.txt の1行目で指定できる。
+    // パスを直書きするとフォルダを移すたびにリビルドが要るため外出しにした。
+    // ファイルが無い/空なら従来どおりデスクトップ。
+    std::wstring dir;
+    {
+        std::ifstream cf(Utf8ToWide(GetPluginDir() + "\\testlog_dir.txt").c_str());
+        std::string line;
+        if(cf && std::getline(cf, line)){
+            if(line.size() >= 3 && (unsigned char)line[0] == 0xEF) line = line.substr(3); // BOM
+            while(!line.empty() && (line.back() == '\r' || line.back() == '\n'
+                                    || line.back() == ' ' || line.back() == '\t')) line.pop_back();
+            if(!line.empty()) dir = Utf8ToWide(line);
         }
     }
-    // Clip overlaps
-    for(size_t i = 1; i < srtSegs.size(); i++){
-        if(srtSegs[i].s < srtSegs[i-1].e)
-            srtSegs[i-1].e = srtSegs[i].s;
+    // v2.9.9: testlog_dir.txt が無い/空なら何も出力しない (オプトイン)。
+    // 以前はデスクトップへ出していたが、配布先の人のデスクトップに毎回ファイルが
+    // 増えてしまうため既定を「出力しない」に変更した。開発機だけこのファイルを置く。
+    if(dir.empty()) return;
+    CreateDirectoryW(dir.c_str(), NULL);
+
+    SYSTEMTIME st; GetLocalTime(&st);
+    int bi = SendMessageA(g_backendCombo, CB_GETCURSEL, 0, 0);
+    char qBuf[16] = {}; GetWindowTextA(g_qualityEdit, qBuf, sizeof(qBuf));
+    int beam = atoi(qBuf); if(beam <= 0) beam = 5;
+    // v2.9.25: 以前は日時つきのファイル名だったため、字幕生成のたびに新しいファイルが
+    // 増え続けていた。削除も世代管理も無いので配布先で際限なく溜まる。固定名1ファイルの
+    // 上書きにする。日時/バックエンド/beam/字幕数は下の本文に書いており、
+    // ファイル名から失われる情報は無い。
+    // ★開発で各回の結果を残したいときは「ログを保存.ps1」で退避すること(次の生成で消える)。
+    std::wstring path = dir + L"\\whisper_testlog.txt";
+
+    // 直近の実行内容を whisper_debug.log から拾う
+    std::string settings, runinfo;
+    {
+        std::ifstream lf(Utf8ToWide(GetPluginDir() + "\\whisper_debug.log").c_str());
+        std::string line;
+        while(std::getline(lf, line)){
+            if(!line.empty() && line.back() == '\r') line.pop_back();
+            if(line.find("SETTINGS") != std::string::npos){ settings += line; settings += "\n"; }
+            else if(line.rfind("Clips: ", 0) == 0
+                 || line.rfind("Template: ", 0) == 0
+                 || line.rfind("Hallucination dropped", 0) == 0
+                 || line.rfind("Quality filtered", 0) == 0
+                 || line.rfind("Morph timing", 0) == 0
+                 || line.rfind("Done: ", 0) == 0){ runinfo += line; runinfo += "\n"; }
+        }
     }
 
-    std::ofstream f(fn);
-    int idx = 1;
-    for(auto& seg : srtSegs){
-        double ss = (double)seg.s / g_projectRate, se = (double)seg.e / g_projectRate;
-        int sh = (int)(ss/3600), sm = (int)(fmod(ss,3600)/60), ssc = (int)fmod(ss,60), sms = (int)(fmod(ss,1)*1000);
-        int eh = (int)(se/3600), em = (int)(fmod(se,3600)/60), esc2 = (int)fmod(se,60), ems = (int)(fmod(se,1)*1000);
-        char buf[128];
-        sprintf_s(buf, "%02d:%02d:%02d,%03d --> %02d:%02d:%02d,%03d", sh,sm,ssc,sms, eh,em,esc2,ems);
-        f << idx++ << "\n" << buf << "\n" << seg.text << "\n\n";
-    }
-    MsgBox(g_wnd, "SRT\xe3\x82\xa8\xe3\x82\xaf\xe3\x82\xb9\xe3\x83\x9d\xe3\x83\xbc\xe3\x83\x88\xe5\xae\x8c\xe4\xba\x86", "SRT", MB_OK|MB_ICONINFORMATION);
+    std::ofstream f(path.c_str(), std::ios::binary);
+    if(!f) return;
+    char dbuf[64];
+    sprintf_s(dbuf, "%04d-%02d-%02d %02d:%02d:%02d",
+              st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+    f << "===== Whisper Subtitle v2.9.25 test log =====\n";
+    f << "datetime  : " << dbuf << "\n";
+    f << "backend   : " << (bi == 0 ? "faster-whisper" : "openai-whisper") << "\n";
+    f << "beam      : " << beam << "\n";
+    f << "subtitles : " << g_segs.size() << "\n";
+    f << "\n--- settings ---\n" << settings;
+    f << "\n--- run info ---\n" << runinfo;
+    f << "\n--- srt ---\n" << BuildSrtText();
+    f.close();
+    DebugLog("Test log: " + WideToUtf8(path));
 }
 
 // =========================================================================
@@ -3258,6 +3887,13 @@ static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l){
             if((HWND)l == g_chkMorphSplit){
                 bool on = SendMessageA(g_chkMorphSplit, BM_GETCHECK, 0, 0) == BST_CHECKED;
                 EnableWindow(g_chkMergeSeg, on ? FALSE : TRUE); // v2.8.5: プロ分割ON時はセグメント結合を無効化
+                // v2.9.11【監査①】文節区切りON時、Python側は word_timestamps を強制Trueにする
+                // (実測割当に単語時刻が必須なため)。UIは触れるままだったので「外したのに効かない」
+                // 状態だった。実態に合わせてONで固定表示し、操作不可にする。
+                if(g_chkWordTs){
+                    if(on) SendMessageA(g_chkWordTs, BM_SETCHECK, BST_CHECKED, 0);
+                    EnableWindow(g_chkWordTs, on ? FALSE : TRUE);
+                }
             }
             if(id == IDC_GENERATE){
                 // v2.9.0【I】: 生成を押した時点で不足を検出して導入へ誘導する。
@@ -3570,7 +4206,9 @@ extern "C" __declspec(dllexport) void __cdecl RegisterPlugin(HOST_APP_TABLE* hos
     SendMessageW(g_modelCombo, CB_ADDSTRING, 0, (LPARAM)L"medium");
     SendMessageW(g_modelCombo, CB_ADDSTRING, 0, (LPARAM)L"large-v3");
     SendMessageW(g_modelCombo, CB_ADDSTRING, 0, (LPARAM)L"large-v3-turbo");
-    SendMessageW(g_modelCombo, CB_ADDSTRING, 0, (LPARAM)L"kotoba-whisper (\x65e5\x82f1)");
+    // v2.9.8: "kotoba-whisper (日英)" はコンボ幅146pxに収まらず表示が切れていたので短縮。
+    // faster-whisper 専用である旨は下の「選択中のモデル」ラベルが表示する。
+    SendMessageW(g_modelCombo, CB_ADDSTRING, 0, (LPARAM)L"kotoba-whisper");
     SendMessageA(g_modelCombo, CB_SETCURSEL, 5, 0);
     hw = CreateWindowExW(0, L"STATIC", L"\x8a00\x8a9e:", WS_CHILD|WS_VISIBLE, SC(212), SC(y+3), SC(36), SC(18), g_wnd, 0, g_hInst, 0); g_tabSubCtrls.push_back(hw);
     g_langCombo = CreateWindowExW(0, L"COMBOBOX", L"", WS_CHILD|WS_VISIBLE|CBS_DROPDOWNLIST|WS_VSCROLL, SC(250), SC(y), SC(90), SC(200), g_wnd, 0, g_hInst, 0); g_tabSubCtrls.push_back(g_langCombo);
@@ -3587,7 +4225,7 @@ extern "C" __declspec(dllexport) void __cdecl RegisterPlugin(HOST_APP_TABLE* hos
     g_progress = CreateWindowExW(0, PROGRESS_CLASSW, L"", WS_CHILD|WS_VISIBLE, SC(14), SC(y), SC(W-24), SC(14), g_wnd, 0, g_hInst, 0); g_tabSubCtrls.push_back(g_progress);
     SendMessageA(g_progress, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
     y += 18;
-    g_status = CreateWindowExW(0, L"STATIC", L"Ready (v2.9.2)", WS_CHILD|WS_VISIBLE, SC(14), SC(y), SC(W-24), SC(20), g_wnd, 0, g_hInst, 0); g_tabSubCtrls.push_back(g_status);
+    g_status = CreateWindowExW(0, L"STATIC", L"Ready (v2.9.25)", WS_CHILD|WS_VISIBLE, SC(14), SC(y), SC(W-24), SC(20), g_wnd, 0, g_hInst, 0); g_tabSubCtrls.push_back(g_status);
 
     // ================================================================
     // Tab 1: 設定 (Settings) — Backend, Beam/Temp, Device, Layer, etc.
@@ -3757,7 +4395,7 @@ extern "C" __declspec(dllexport) void __cdecl RegisterPlugin(HOST_APP_TABLE* hos
     g_progressSetup = CreateWindowExW(0, PROGRESS_CLASSW, L"", WS_CHILD, SC(14), SC(y), SC(W-24), SC(14), g_wnd, 0, g_hInst, 0); g_tabSetupCtrls.push_back(g_progressSetup);
     SendMessageA(g_progressSetup, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
     y += 18; // y=330
-    g_statusSetup = CreateWindowExW(0, L"STATIC", L"Ready (v2.9.2)", WS_CHILD, SC(14), SC(y), SC(W-24), SC(20), g_wnd, 0, g_hInst, 0); g_tabSetupCtrls.push_back(g_statusSetup);
+    g_statusSetup = CreateWindowExW(0, L"STATIC", L"Ready (v2.9.25)", WS_CHILD, SC(14), SC(y), SC(W-24), SC(20), g_wnd, 0, g_hInst, 0); g_tabSetupCtrls.push_back(g_statusSetup);
     // y+20 = 350 = 最下端(タブ下端362に収まる)
 
     SwitchTab(0);
@@ -3766,6 +4404,14 @@ extern "C" __declspec(dllexport) void __cdecl RegisterPlugin(HOST_APP_TABLE* hos
     LoadSettings();
     std::thread(ProbeThread).detach(); // v2.9.0【A】: 起動時に1回だけpythonを回して導入状況を一括実測(表示専用、UIは固まらない)
     EnableWindow(g_chkMergeSeg, (SendMessageA(g_chkMorphSplit, BM_GETCHECK, 0, 0) == BST_CHECKED) ? FALSE : TRUE); // v2.8.5
+    // v2.9.11【監査①】起動時にも同じ状態にする(設定読み込み直後)
+    {
+        bool mOn = (SendMessageA(g_chkMorphSplit, BM_GETCHECK, 0, 0) == BST_CHECKED);
+        if(g_chkWordTs){
+            if(mOn) SendMessageA(g_chkWordTs, BM_SETCHECK, BST_CHECKED, 0);
+            EnableWindow(g_chkWordTs, mOn ? FALSE : TRUE);
+        }
+    }
     UpdateVadEnable(); // v2.9.5: 起動時にも反映
 
     // Auto-detect ffmpeg on first run (if not already set)
@@ -3820,12 +4466,12 @@ Write-Host "  Brace check: open=$openBraces close=$closeBraces" -ForegroundColor
 Write-Host "Step 2: Generating CMakeLists.txt..." -ForegroundColor Yellow
 $cmake = @"
 cmake_minimum_required(VERSION 3.15)
-project(whisper_subtitle_v2_9_2 LANGUAGES CXX)
+project(whisper_subtitle_v2_9_25 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
-add_library(whisper_subtitle_v2_9_2 SHARED src/whisper_subtitle.cpp)
-target_compile_definitions(whisper_subtitle_v2_9_2 PRIVATE UNICODE _UNICODE)
+add_library(whisper_subtitle_v2_9_25 SHARED src/whisper_subtitle.cpp)
+target_compile_definitions(whisper_subtitle_v2_9_25 PRIVATE UNICODE _UNICODE)
 if(MSVC)
-    target_compile_options(whisper_subtitle_v2_9_2 PRIVATE /utf-8 /wd4828)
+    target_compile_options(whisper_subtitle_v2_9_25 PRIVATE /utf-8 /wd4828)
 endif()
 # v2.9.6【配布】CRT を静的リンク(/MT)にする。
 # 従来は CMake 既定の /MD で、配布先に VCRUNTIME140.dll / VCRUNTIME140_1.dll / MSVCP140.dll
@@ -3834,14 +4480,14 @@ endif()
 # 明示しており AviUtl2 上で本番稼働中 = このホストで静的CRTが安全なことは実証済み。
 # Whisper だけ /MD だったのは CMake 既定のまま取り残されていただけで、設計判断ではない。
 # CMP0091 は cmake_minimum_required(3.15) により NEW になるのでこのプロパティが効く。
-set_property(TARGET whisper_subtitle_v2_9_2 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
-set_target_properties(whisper_subtitle_v2_9_2 PROPERTIES
-    OUTPUT_NAME "whisper_subtitle_v2_9_2"
+set_property(TARGET whisper_subtitle_v2_9_25 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
+set_target_properties(whisper_subtitle_v2_9_25 PROPERTIES
+    OUTPUT_NAME "whisper_subtitle_v2_9_25"
     SUFFIX ".aux2"
     PREFIX ""
     RUNTIME_OUTPUT_DIRECTORY_RELEASE "`${CMAKE_BINARY_DIR}/Release"
 )
-target_link_libraries(whisper_subtitle_v2_9_2 PRIVATE comctl32 shell32 comdlg32 ole32)
+target_link_libraries(whisper_subtitle_v2_9_25 PRIVATE comctl32 shell32 comdlg32 ole32)
 "@
 [System.IO.File]::WriteAllText("$projDir\CMakeLists.txt", $cmake, [System.Text.Encoding]::UTF8)
 Write-Host "  CMakeLists.txt written" -ForegroundColor White
@@ -3879,18 +4525,18 @@ try {
     Write-Host "  Build OK" -ForegroundColor Green
 
     # Find output
-    $aux2 = Get-ChildItem -Path $buildDir -Recurse -Filter "whisper_subtitle_v2_9_2.aux2" | Select-Object -First 1
+    $aux2 = Get-ChildItem -Path $buildDir -Recurse -Filter "whisper_subtitle_v2_9_25.aux2" | Select-Object -First 1
     if($aux2){
         # v2.8b: always deploy next to this script (..\sdk whisper開発場所\), NOT to $d/Desktop,
         # and NEVER to the production AviUtl2Portable folder. Filename is version-specific so the
         # existing whisper_subtitle_v2_8_9.aux2 / whisper_subtitle.aux2 (v2.8 stable) are never touched/overwritten.
         $destDir = $PSScriptRoot
         if([string]::IsNullOrEmpty($destDir)){ $destDir = Split-Path -Parent $MyInvocation.MyCommand.Path }
-        $dest = Join-Path $destDir "whisper_subtitle_v2_9_2.aux2"
+        $dest = Join-Path $destDir "whisper_subtitle_v2_9_25.aux2"
         Copy-Item $aux2.FullName $dest -Force
         Write-Host ""
         Write-Host "============================================" -ForegroundColor Green
-        Write-Host " BUILD SUCCESS! v2.8.2" -ForegroundColor Green
+        Write-Host " BUILD SUCCESS! v2.9.25" -ForegroundColor Green
         Write-Host "============================================" -ForegroundColor Green
         Write-Host "Output: $dest" -ForegroundColor Yellow
         Write-Host ""
