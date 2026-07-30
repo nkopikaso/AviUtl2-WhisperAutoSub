@@ -149,7 +149,7 @@ v2.9 以降 : WhisperAutoSub.aux2
 | 項目 | 要件 | 備考 |
 | --- | --- | --- |
 | OS | Windows 10 / 11 |  |
-| AviUtl2 | 2.0 beta40 以降推奨 |  |
+| AviUtl2 | **2.1.2 で動作確認** | 内部的には 2.0 beta40 世代の構造に対応しています |
 | Python | **3.10 以上**（**3.12 系を推奨**。3.13 / 3.14 も条件付きで可、下記） | [ダウンロード](https://www.python.org/downloads/windows/)（**python.org 版**） |
 | ffmpeg | 自動取得されます | 手動なら [gyan.dev](https://www.gyan.dev/ffmpeg/builds/) |
 | GPU（任意） | NVIDIA CUDA 11.8+ 対応 | なくても CPU モードで動作します |
@@ -188,7 +188,7 @@ v2.9 以降 : WhisperAutoSub.aux2
 | RAM | 32GB |
 | Python | 3.12.10 |
 | FFmpeg | 7.1 |
-| AviUtl2 | ExEdit2 2.0 beta40 / 2.1.2 |
+| AviUtl2 | ExEdit2 2.1.2 |
 
 ---
 
